@@ -282,7 +282,11 @@ export function LadderbataTimer() {
     }, 1000)
     
     setTick(newTick)
-    beginWork()
+    
+    // Trigger Sonner notification when work round starts
+    toast.success('Work Round Started', {
+      description: `Round ${state.currentRound} - ${state.currentRound} minutes of work`,
+    })
   }
 
   const handleRoundsChange = (rounds: number) => {
