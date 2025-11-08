@@ -263,7 +263,7 @@ export function LadderbataTimer() {
         currentRounds={state.targetRounds}
         onRoundsChange={handleRoundsChange}
         onStart={handleStart}
-        onReset={handleStart}
+        onReset={reset}
         isRunning={state.phase === 'work' || state.phase === 'rest'}
       />
       
