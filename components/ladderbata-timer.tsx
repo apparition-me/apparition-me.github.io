@@ -204,9 +204,9 @@ export function LadderbataTimer() {
             } else {
               // Next round
               const nextRound = prev.currentRound + 1
-              // Auto-advance carousel to next round
+              // Auto-advance carousel to next round (center the active round)
               if (carouselApi) {
-                carouselApi.scrollTo(nextRound - 1)
+                setTimeout(() => carouselApi.scrollTo(nextRound - 1), 100)
               }
               return {
                 ...prev,
@@ -335,7 +335,7 @@ export function LadderbataTimer() {
               <Carousel 
                 setApi={setCarouselApi}
                 opts={{
-                  align: "start",
+                  align: "center",
                   loop: false,
                   watchDrag: false,
                 }}
@@ -344,18 +344,20 @@ export function LadderbataTimer() {
                 <CarouselContent>
                   {generateTableData(state.targetRounds).map((item, index) => (
                     <CarouselItem key={item.round} className="md:basis-1/2 lg:basis-1/3">
-                      <Card className={`${index === state.currentRound - 1 ? 'ring-2 ring-green-500' : ''}`}>
+                      <Card className={`${index === state.currentRound - 1 ? 'bg-green-500' : ''}`}>
                         <CardHeader>
-                          <CardTitle className="text-center font-mono">
-                            ROUND {item.round} ({item.workMinutes} MINUTES)
+                          
+                          <CardTitle className={`text-center font-mono text-4xl uppercase ${index === state.currentRound - 1 ? 'text-white' : ''}`}>
+                            ROUND
+                            <h1 className={`text-center font-mono text-8xl ${index === state.currentRound - 1 ? 'text-white' : ''}`}>{item.round}</h1>
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 font-mono">
                           <div className="text-center">
-                            <div className="font-bold">WORK: {mmss(item.workMinutes * 60)}</div>
-                            <div className="font-bold">REST: {mmss(60)}</div>
-                            <div className="font-bold text-sm text-muted-foreground">
-                              ELAPSED TIME ON COMPLETION: {mmss(item.elapsedTimeOnCompletion * 60)}
+                            <div className={`font-bold ${index === state.currentRound - 1 ? 'text-white' : ''}`}>WORK: {mmss(item.workMinutes * 60)}</div>
+                            <div className={`font-bold ${index === state.currentRound - 1 ? 'text-white' : ''}`}>REST: {mmss(60)}</div>
+                            <div className={`font-bold text-sm uppercase tracking-tight mt-4 ${index === state.currentRound - 1 ? 'text-white' : 'text-muted-foreground'}`}>
+                              CLOCK TIME: {mmss(item.elapsedTimeOnCompletion * 60)}
                             </div>
                           </div>
                         </CardContent>
