@@ -4,7 +4,6 @@ import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { RoundSelectionDrawer } from "@/components/round-selection-drawer"
-import { WorkoutTable } from "@/components/workout-table"
 
 interface TimerState {
   targetRounds: number
@@ -46,7 +45,6 @@ export function LadderbataTimer() {
   })
 
   const [queue, setQueue] = React.useState<QueueItem[]>([])
-  const [tableData, setTableData] = React.useState<WorkoutTableRow[]>([])
   const [tick, setTick] = React.useState<NodeJS.Timeout | null>(null)
 
   const mmss = (s: number) => {
@@ -69,18 +67,29 @@ export function LadderbataTimer() {
     }
   }
 
-  const transformQueueToTableData = (queueItems: QueueItem[]): WorkoutTableRow[] => {
-    return queueItems.map((item) => ({
-      id: `round-${item.round}`,
-      description: `Round ${item.round} Workout`,
-      quantity: item.workMinutes,
-      price: item.workMinutes * 10, // Example pricing: $10 per minute
-      total: item.workMinutes * 10,
-      workStart: item.workStart,
-      restStart: item.restStart,
-      workMinutes: item.workMinutes,
-      elapsedTimeOnCompletion: item.completionTime,
-    }))
+  // Generate table data directly from targetRounds - no complex state management
+  const generateTableData = (rounds: number) => {
+    const tableRows = []
+    let cumulativeTime = 0
+    
+    for (let r = 1; r <= rounds; r++) {
+      const workStart = cumulativeTime
+      const workMinutes = r
+      const restStart = cumulativeTime + workMinutes
+      const completionTime = restStart + 1 // 1 min rest
+      
+      tableRows.push({
+        round: r,
+        workStart,
+        restStart,
+        workMinutes,
+        elapsedTimeOnCompletion: completionTime,
+      })
+      
+      cumulativeTime = completionTime
+    }
+    
+    return tableRows
   }
 
   const buildQueue = (total: number) => {
@@ -107,9 +116,6 @@ export function LadderbataTimer() {
     
     console.log('buildQueue created newQueue with length:', newQueue.length)
     setQueue(newQueue)
-    const transformedData = transformQueueToTableData(newQueue)
-    console.log('transformedData length:', transformedData.length)
-    setTableData(transformedData)
   }
 
 
@@ -124,7 +130,6 @@ export function LadderbataTimer() {
       phaseStartElapsed: 0,
     })
     setQueue([])
-    setTableData([])
   }
 
   const beginWork = () => {
@@ -303,12 +308,35 @@ export function LadderbataTimer() {
             </div>
           </main>
 
-          {tableData.length > 0 && (
+          {state.targetRounds > 0 && (
             <section className="max-w-3xl mx-auto mt-6">
-              <WorkoutTable 
-                data={tableData} 
-                currentRound={state.currentRound}
-              />
+              <div className="bg-card border rounded-xl">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left p-3 font-bold">ROUND</th>
+                      <th className="text-left p-3 font-bold">WORK START</th>
+                      <th className="text-left p-3 font-bold">REST START</th>
+                      <th className="text-left p-3 font-bold">WORK MINUTES</th>
+                      <th className="text-left p-3 font-bold">ELAPSED TIME ON COMPLETION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {generateTableData(state.targetRounds).map((item, index) => (
+                      <tr 
+                        key={item.round} 
+                        className={index === 0 && state.currentRound ? 'bg-green-50' : ''}
+                      >
+                        <td className="p-3 border-b border-border/50">{item.round}</td>
+                        <td className="p-3 border-b border-border/50">{item.workStart}</td>
+                        <td className="p-3 border-b border-border/50">{item.restStart}</td>
+                        <td className="p-3 border-b border-border/50">{item.workMinutes}</td>
+                        <td className="p-3 border-b border-border/50">{item.elapsedTimeOnCompletion}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           )}
         </>
