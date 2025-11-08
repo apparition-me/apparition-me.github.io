@@ -117,19 +117,18 @@ export function RoundSelectionDrawer({
             </div>
           </div>
           <DrawerFooter>
-            {!isRunning ? (
-              <DrawerClose asChild>
-                <Button onClick={handleSubmit} className="font-mono">
-                  Start Timer
-                </Button>
-              </DrawerClose>
-            ) : (
+            <DrawerClose asChild>
+              <Button onClick={handleSubmit} className="font-mono">
+                Start Timer
+              </Button>
+            </DrawerClose>
+            {isRunning && (
               <Button 
                 onClick={() => window.location.reload()} 
                 variant="destructive" 
                 className="font-mono"
               >
-                Reset Timer
+                Refresh Page
               </Button>
             )}
           </DrawerFooter>
