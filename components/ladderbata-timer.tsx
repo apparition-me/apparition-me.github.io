@@ -175,6 +175,7 @@ export function LadderbataTimer() {
     // Don't clear tableData - keep table visible after completion
   }
 
+  // COMPLETELY ISOLATED COUNTDOWN TIMER - NO INTERFERENCE WITH MAIN TIMER
   const startCountdown = () => {
     setState(prev => ({
       ...prev,
@@ -186,97 +187,96 @@ export function LadderbataTimer() {
     buildQueue(state.targetRounds)
     setCountdownSeconds(10)
     
-    // Start countdown timer
-    clearTimer()
+    // ISOLATED countdown timer - uses its own variable, no shared state
+    let countdownValue = 10
     const countdownInterval = setInterval(() => {
-      setCountdownSeconds(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval)
-          setCountdownTick(null)
-          // Start work phase immediately after countdown
-          setState(prevState => ({
-            ...prevState,
-            phase: 'work',
-            secondsLeft: prevState.currentRound * 60,
-            phaseStartElapsed: prevState.elapsedSeconds,
-          }))
-          
-          // Start main timer
-          setTimeout(() => {
-            const workTick = setInterval(() => {
-              setState(prev => {
-                const newElapsed = prev.elapsedSeconds + 1
-                const phaseDuration = prev.phase === 'work' ? prev.currentRound * 60 : 60
-                const elapsedInPhase = newElapsed - prev.phaseStartElapsed
-                const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
-                
-                console.log('Timer tick:', {
-                  phase: prev.phase,
-                  currentRound: prev.currentRound,
-                  newElapsed,
-                  elapsedInPhase,
-                  newSecondsLeft,
-                  phaseDuration
-                })
-
-                if (newSecondsLeft === 0) {
-                  if (prev.phase === 'work') {
-                    // Transition to rest
-                    return {
-                      ...prev,
-                      elapsedSeconds: newElapsed,
-                      phase: 'rest',
-                      secondsLeft: 60,
-                      phaseStartElapsed: newElapsed,
-                    }
-                  } else if (prev.phase === 'rest') {
-                    // Round completed
-                    if (prev.currentRound >= prev.targetRounds) {
-                      complete()
-                      return {
-                        ...prev,
-                        elapsedSeconds: newElapsed,
-                        phase: 'done',
-                        secondsLeft: 0,
-                      }
-                    } else {
-                      // Next round
-                      const nextRound = prev.currentRound + 1
-                      return {
-                        ...prev,
-                        elapsedSeconds: newElapsed,
-                        currentRound: nextRound,
-                        phase: 'work',
-                        secondsLeft: nextRound * 60,
-                        phaseStartElapsed: newElapsed,
-                      }
-                    }
-                  }
-                }
-
-                return {
-                  ...prev,
-                  elapsedSeconds: newElapsed,
-                  secondsLeft: newSecondsLeft,
-                }
-              })
-            }, 1000)
-            
-            setTick(workTick)
-            
-            // Trigger notification
-            toast.success('Work Round Started', {
-              description: `Round 1 - 1 minute of work`,
-            })
-          }, 200)
-          
-          return 0
-        }
-        return prev - 1
-      })
+      countdownValue--
+      setCountdownSeconds(countdownValue)
+      
+      if (countdownValue <= 0) {
+        clearInterval(countdownInterval)
+        // Start the main timer COMPLETELY SEPARATELY
+        startMainTimer()
+      }
     }, 1000)
     
     setCountdownTick(countdownInterval)
+  }
+
+  // COMPLETELY SEPARATE MAIN TIMER FUNCTION
+  const startMainTimer = () => {
+    setState(prev => ({
+      ...prev,
+      phase: 'work',
+      secondsLeft: prev.currentRound * 60,
+      phaseStartElapsed: prev.elapsedSeconds,
+    }))
+    
+    const workTick = setInterval(() => {
+      setState(prev => {
+        const newElapsed = prev.elapsedSeconds + 1
+        const phaseDuration = prev.phase === 'work' ? prev.currentRound * 60 : 60
+        const elapsedInPhase = newElapsed - prev.phaseStartElapsed
+        const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
+        
+        console.log('Timer tick:', {
+          phase: prev.phase,
+          currentRound: prev.currentRound,
+          newElapsed,
+          elapsedInPhase,
+          newSecondsLeft,
+          phaseDuration
+        })
+
+        if (newSecondsLeft === 0) {
+          if (prev.phase === 'work') {
+            // Transition to rest
+            return {
+              ...prev,
+              elapsedSeconds: newElapsed,
+              phase: 'rest',
+              secondsLeft: 60,
+              phaseStartElapsed: newElapsed,
+            }
+          } else if (prev.phase === 'rest') {
+            // Round completed
+            if (prev.currentRound >= prev.targetRounds) {
+              complete()
+              return {
+                ...prev,
+                elapsedSeconds: newElapsed,
+                phase: 'done',
+                secondsLeft: 0,
+              }
+            } else {
+              // Next round
+              const nextRound = prev.currentRound + 1
+              return {
+                ...prev,
+                elapsedSeconds: newElapsed,
+                currentRound: nextRound,
+                phase: 'work',
+                secondsLeft: nextRound * 60,
+                phaseStartElapsed: newElapsed,
+              }
+            }
+          }
+        }
+
+        return {
+          ...prev,
+          elapsedSeconds: newElapsed,
+          secondsLeft: newSecondsLeft,
+        }
+      })
+    }, 1000)
+    
+    setTick(workTick)
+    
+    // Trigger notification
+    toast.success('Work Round Started', {
+      description: `Round 1 - 1 minute of work`,
+    })
   }
 
   const handleRoundsChange = (rounds: number) => {
