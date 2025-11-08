@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button"
 import { RoundSelectionDrawer } from "@/components/round-selection-drawer"
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Progress } from "@/components/ui/progress"
 
 interface TimerState {
   targetRounds: number
   currentRound: number
-  phase: 'idle' | 'work' | 'rest' | 'done'
+  phase: 'idle' | 'countdown' | 'work' | 'rest' | 'done'
   secondsLeft: number
   elapsedSeconds: number
   phaseStartElapsed: number
@@ -50,6 +52,7 @@ export function LadderbataTimer() {
   const [tick, setTick] = React.useState<NodeJS.Timeout | null>(null)
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
   const [currentCarouselIndex, setCurrentCarouselIndex] = React.useState(0)
+  const [countdownSeconds, setCountdownSeconds] = React.useState(10)
 
   const mmss = (s: number) => {
     const m = Math.floor(s / 60).toString().padStart(2, '0')
@@ -190,17 +193,42 @@ export function LadderbataTimer() {
     // Don't clear tableData - keep table visible after completion
   }
 
-  const startFlow = () => {
-    console.log('startFlow called with state.targetRounds:', state.targetRounds)
+  const startCountdown = () => {
     setState(prev => ({
       ...prev,
+      phase: 'countdown',
       currentRound: 1,
       elapsedSeconds: 0,
     }))
     
     buildQueue(state.targetRounds)
+    setCountdownSeconds(10)
     
-    // Start the timer
+    // Start countdown timer
+    clearTimer()
+    const countdownTick = setInterval(() => {
+      setCountdownSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownTick)
+          startWorkTimer()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    
+    setTick(countdownTick)
+  }
+
+  const startWorkTimer = () => {
+    setState(prev => ({
+      ...prev,
+      phase: 'work',
+      secondsLeft: prev.currentRound * 60,
+      phaseStartElapsed: prev.elapsedSeconds,
+    }))
+    
+    // Start the work/rest timer
     clearTimer()
     const newTick = setInterval(() => {
       setState(prev => {
@@ -264,7 +292,7 @@ export function LadderbataTimer() {
 
   const handleStart = () => {
     if (state.phase === 'idle' || state.phase === 'done') {
-      startFlow()
+      startCountdown()
     } else {
       reset()
     }
@@ -320,9 +348,24 @@ export function LadderbataTimer() {
         onReset={reset}
         isRunning={state.phase === 'work' || state.phase === 'rest'}
       />
+
+      {/* Countdown Dialog */}
+      <Dialog open={state.phase === 'countdown'}>
+        <DialogContent className="bg-white border-none shadow-2xl max-w-md">
+          <div className="flex flex-col items-center justify-center py-8">
+            <h1 className="text-9xl font-bold text-black font-mono mb-6">
+              {countdownSeconds}
+            </h1>
+            <Progress 
+              value={((10 - countdownSeconds) / 10) * 100} 
+              className="w-full h-4 bg-gray-200"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
       
-      {/* Timer interface - only show when NOT in idle/done states */}
-      {state.phase !== 'idle' && state.phase !== 'done' && (
+      {/* Timer interface - only show when NOT in idle/done/countdown states */}
+      {state.phase !== 'idle' && state.phase !== 'done' && state.phase !== 'countdown' && (
         <>
           <main className="max-w-3xl mx-auto bg-card border rounded-2xl shadow-lg p-6">
             <header 
