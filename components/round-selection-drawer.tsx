@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { Minus, Plus } from "lucide-react"
-import { Bar, BarChart, ResponsiveContainer } from "recharts"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,23 +15,6 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer"
 
-// Sample data for the chart - representing workout intensity over rounds
-const data = [
-  { round: 1, intensity: 100 },
-  { round: 2, intensity: 200 },
-  { round: 3, intensity: 300 },
-  { round: 4, intensity: 400 },
-  { round: 5, intensity: 500 },
-  { round: 6, intensity: 600 },
-  { round: 7, intensity: 700 },
-  { round: 8, intensity: 800 },
-  { round: 9, intensity: 900 },
-  { round: 10, intensity: 1000 },
-  { round: 11, intensity: 1100 },
-  { round: 12, intensity: 1200 },
-  { round: 13, intensity: 1300 },
-]
-
 interface RoundSelectionDrawerProps {
   currentRounds: number
   onRoundsChange: (rounds: number) => void
@@ -45,6 +27,7 @@ export function RoundSelectionDrawer({
   onStart 
 }: RoundSelectionDrawerProps) {
   const [rounds, setRounds] = React.useState(currentRounds)
+  const [open, setOpen] = React.useState(false)
 
   function onClick(adjustment: number) {
     const newRounds = Math.max(1, Math.min(20, rounds + adjustment))
@@ -56,14 +39,19 @@ export function RoundSelectionDrawer({
     onStart()
   }
 
-  // Generate chart data based on current rounds selection
-  const chartData = data.slice(0, rounds).map((item, index) => ({
-    ...item,
-    intensity: (index + 1) * 100 // Each round increases intensity
-  }))
+  // Calculate total workout time
+  const calculateTotalTime = (rounds: number) => {
+    let totalTime = 0
+    for (let r = 1; r <= rounds; r++) {
+      totalTime += r + 1 // work minutes + 1 minute rest
+    }
+    return totalTime - 1 // Remove last rest period
+  }
+
+  const totalWorkoutTime = calculateTotalTime(rounds)
 
   return (
-    <Drawer>
+    <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button variant="outline" className="font-mono">
           {currentRounds} Work rounds
@@ -108,18 +96,13 @@ export function RoundSelectionDrawer({
                 <span className="sr-only">Increase</span>
               </Button>
             </div>
-            <div className="mt-3 h-[120px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <Bar
-                    dataKey="intensity"
-                    style={{
-                      fill: "hsl(var(--primary))",
-                      opacity: 0.9,
-                    }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="mt-6 text-center">
+              <div className="text-sm text-muted-foreground font-mono uppercase mb-1">
+                Total Workout Time
+              </div>
+              <div className="text-3xl font-bold font-mono">
+                {totalWorkoutTime} minutes
+              </div>
             </div>
           </div>
           <DrawerFooter>
