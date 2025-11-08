@@ -8,6 +8,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/com
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
+import { TimerReset } from "lucide-react"
 
 interface TimerState {
   targetRounds: number
@@ -361,7 +362,7 @@ export function LadderbataTimer() {
             <h1 className={` text-8xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
               {getPhaseText()}
             </h1>
-             <div className={`font-mono text-8xl mt-2 tabular-nums  text-center  ${getPhaseClass()}`}>
+             <div className={`font-mono font-bold text-6xl sm:text-8xl lg:text-9xl mt-2 tabular-nums text-center ${getPhaseClass()}`}>
                 {mmss(state.secondsLeft)}
               </div>
 
@@ -428,6 +429,18 @@ export function LadderbataTimer() {
               </Carousel>
             </section>
           )}
+
+          {/* Reset Timer Button */}
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={() => window.location.reload()}
+              variant="secondary"
+              className="bg-muted text-white font-mono font-bold"
+            >
+              <TimerReset className="mr-2 h-4 w-4" />
+              RESET TIMER
+            </Button>
+          </div>
         </>
       )}
     </div>
