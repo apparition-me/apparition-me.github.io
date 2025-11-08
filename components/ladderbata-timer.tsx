@@ -84,6 +84,7 @@ export function LadderbataTimer() {
   }
 
   const buildQueue = (total: number) => {
+    console.log('buildQueue called with total:', total)
     const newQueue: QueueItem[] = []
     let cumulativeTime = 0
     
@@ -104,8 +105,11 @@ export function LadderbataTimer() {
       cumulativeTime = completionTime
     }
     
+    console.log('buildQueue created newQueue with length:', newQueue.length)
     setQueue(newQueue)
-    setTableData(transformQueueToTableData(newQueue))
+    const transformedData = transformQueueToTableData(newQueue)
+    console.log('transformedData length:', transformedData.length)
+    setTableData(transformedData)
   }
 
 
@@ -155,9 +159,11 @@ export function LadderbataTimer() {
       secondsLeft: 0,
     }))
     setQueue([])
+    // Don't clear tableData - keep table visible after completion
   }
 
   const startFlow = () => {
+    console.log('startFlow called with state.targetRounds:', state.targetRounds)
     setState(prev => ({
       ...prev,
       currentRound: 1,
