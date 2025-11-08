@@ -373,12 +373,10 @@ export function LadderbataTimer() {
              
             </div>
 
-            <div className="flex items-center justify-between px-6 py-4 font-mono">
-              <div className="flex items-center space-x-2">
-                <Spinner className="text-muted-foreground" />
-                <span className="text-lg font-bold">Running Clock Time:</span>
-              </div>
-              <span className="text-3xl font-bold tabular-nums">{hms(state.elapsedSeconds)}</span>
+            <div className="flex items-center gap-2 px-6 py-4 font-mono bg-red-500">
+              <Spinner className="text-muted-foreground" />
+              <span className="text-lg font-bold uppercase">Running Clock Time:</span>
+              <span className="text-lg font-bold tabular-nums">{hms(state.elapsedSeconds)}</span>
             </div>
           </main>
 
