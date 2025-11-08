@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { RoundSelectionDrawer } from "@/components/round-selection-drawer"
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel"
@@ -264,10 +263,6 @@ export function LadderbataTimer() {
     
     setTick(workTick)
     
-    // Trigger notification
-    toast.success('Work Round Started', {
-      description: `Round 1 - 1 minute of work`,
-    })
   }
 
   const handleRoundsChange = (rounds: number) => {
@@ -435,9 +430,9 @@ export function LadderbataTimer() {
             <Button 
               onClick={() => window.location.reload()}
               variant="secondary"
-              className="bg-muted text-white font-mono font-bold"
+              className="bg-muted text-black font-mono font-bold"
             >
-              <TimerReset className="mr-2 h-4 w-4" />
+              <TimerReset className="mr-2 h-4 w-4 text-black" />
               RESET TIMER
             </Button>
           </div>
