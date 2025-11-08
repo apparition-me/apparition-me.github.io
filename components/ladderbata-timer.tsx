@@ -229,6 +229,7 @@ export function LadderbataTimer() {
   }
 
   const handleRoundsChange = (rounds: number) => {
+    console.log('handleRoundsChange called with rounds:', rounds)
     setState(prev => ({ ...prev, targetRounds: rounds }))
   }
 

@@ -39,6 +39,7 @@ export function RoundSelectionDrawer({
   }
 
   function handleSubmit() {
+    console.log('Drawer handleSubmit called with rounds:', rounds)
     onRoundsChange(rounds)
     setOpen(false)
     onStart()
