@@ -111,35 +111,21 @@ export function RoundSelectionDrawer({
           </div>
           <DrawerFooter>
             {!isRunning ? (
-              <>
-                <DrawerClose asChild>
-                  <Button onClick={handleSubmit} className="font-mono">
-                    Start Timer
-                  </Button>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Button variant="outline" className="font-mono">
-                    Cancel
-                  </Button>
-                </DrawerClose>
-              </>
+              <DrawerClose asChild>
+                <Button onClick={handleSubmit} className="font-mono">
+                  Start Timer
+                </Button>
+              </DrawerClose>
             ) : (
-              <>
-                <DrawerClose asChild>
-                  <Button 
-                    onClick={onReset} 
-                    variant="destructive" 
-                    className="font-mono"
-                  >
-                    Reset Timer
-                  </Button>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Button variant="outline" className="font-mono">
-                    Cancel
-                  </Button>
-                </DrawerClose>
-              </>
+              <DrawerClose asChild>
+                <Button 
+                  onClick={onReset} 
+                  variant="destructive" 
+                  className="font-mono"
+                >
+                  Reset Timer
+                </Button>
+              </DrawerClose>
             )}
           </DrawerFooter>
         </div>
