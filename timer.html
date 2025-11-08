@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LADDERBATA - Apparition Timer</title>
+<style>
+  :root { --fg:#0f1115; --bg:#fff; --green:#16a34a; --red:#ef4444; --muted:#6b7280; }
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    color:var(--fg); background:var(--bg); padding:28px
+  }
+  .card{width:min(720px,100%); padding:24px 24px 28px; border:1px solid #e5e7eb; border-radius:16px;
+        box-shadow:0 8px 28px rgba(0,0,0,.06); margin:0 auto}
+  header{display:flex; gap:10px; align-items:center; justify-content:space-between}
+  .row{display:flex; gap:10px; align-items:center}
+  input[type="number"]{width:110px; padding:8px 10px; font-size:16px; border:1px solid #d1d5db; border-radius:10px; text-align:right}
+  button{padding:9px 14px; font-size:16px; border-radius:10px; border:1px solid #111827; background:#111827; color:#fff; cursor:pointer}
+  h1{font-size:52px; line-height:1.05; margin:18px 0 6px; font-weight:800; text-align:center}
+  .work{color:var(--green)} .rest{color:var(--red)} .done{color:#111827}
+  .info{display:grid; grid-template-columns:1fr; gap:6px; margin-top:8px; text-align:center}
+  .info .line{font-weight:700}
+  .muted{color:var(--muted)}
+  .elapsed{margin-top:10px; text-align:center; font-size:22px}
+  .elapsed .time{font-size:28px}
+  /* Table */
+  .table-wrap{width:min(720px,100%); margin:24px auto 0}
+  table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; font-size:14px}
+  thead th{background:#f8fafc; text-align:left; padding:10px 12px; font-weight:700; border-bottom:1px solid #e5e7eb}
+  tbody td{padding:10px 12px; border-bottom:1px solid #f1f5f9; text-align:left}
+  tr.highlight{background:#f0fdf4}
+  tbody tr:last-child td{border-bottom:none}
+</style>
+</head>
+<body>
+  <main class="card">
+    <header>
+      <div style="font-weight:800">LADDERBATA</div>
+      <div class="row">
+        <label for="rounds">Work rounds</label>
+        <input id="rounds" type="number" min="1" step="1" value="8" />
+        <button id="startBtn">Start</button>
+      </div>
+    </header>
+
+    <h1 id="phase" class="work">READY</h1>
+
+    <div class="info">
+      <div class="line">ROUND: <span id="roundNow">–</span> OF <span id="roundTotal">–</span></div>
+      <div class="line">CURRENT ROUND: <span id="currentWork">–</span> MINUTES OF WORK</div>
+      <div class="line muted">NEXT ROUND: <span id="nextWork">–</span> MINUTES OF WORK</div>
+      <div class="line muted" id="clock" style="font-variant-numeric: tabular-nums; font-size:64px; margin-top:6px">00:00</div>
+    </div>
+
+    <div class="elapsed">
+      TOTAL ELAPSED: <span id="elapsed" class="time">00:00:00</span>
+    </div>
+  </main>
+
+  <section class="table-wrap">
+    <table aria-label="Remaining rounds">
+      <thead>
+        <tr><th>Round</th><th>Work Start</th><th>Rest Start</th><th>Work Minutes</th><th>Elapsed Time on Completion</th></tr>
+      </thead>
+      <tbody id="queueBody"></tbody>
+    </table>
+  </section>
+
+<script>
+(() => {
+  // Elements
+  const roundsInput  = document.getElementById('rounds');
+  const startBtn     = document.getElementById('startBtn');
+  const phaseEl      = document.getElementById('phase');
+  const roundNowEl   = document.getElementById('roundNow');
+  const roundTotalEl = document.getElementById('roundTotal');
+  const currentWorkEl= document.getElementById('currentWork');
+  const nextWorkEl   = document.getElementById('nextWork');
+  const clockEl      = document.getElementById('clock');
+  const queueBody    = document.getElementById('queueBody');
+  const elapsedEl    = document.getElementById('elapsed');
+
+  // State
+  let targetRounds = 0;
+  let currentRound = 0;
+  let phase = 'idle';                 // 'work' | 'rest' | 'idle' | 'done'
+  let secondsLeft = 0;
+  let tick = null;
+  let elapsedSeconds = 0;
+  let phaseStartElapsed = 0;          // track when current phase started
+
+  const mmss = s => {
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = Math.floor(s % 60).toString().padStart(2,'0');
+    return `${m}:${sec}`;
+  };
+  const hms = s => {
+    const h = Math.floor(s / 3600).toString().padStart(2,'0');
+    const m = Math.floor((s % 3600) / 60).toString().padStart(2,'0');
+    const sec = Math.floor(s % 60).toString().padStart(2,'0');
+    return `${h}:${m}:${sec}`;
+  };
+  const clearTimer = () => { if (tick) { clearInterval(tick); tick = null; } };
+
+  function buildQueue(total) {
+    queueBody.innerHTML = '';
+    let cumulativeTime = 0;
+    for (let r = 1; r <= total; r++) {
+      const workStart = cumulativeTime;
+      const workMinutes = r;
+      const restStart = cumulativeTime + workMinutes;
+      const completionTime = restStart + 1; // 1 min rest
+      
+      const tr = document.createElement('tr');
+      tr.dataset.round = String(r);
+      tr.innerHTML = `<td>${r}</td><td>${workStart}</td><td>${restStart}</td><td>${workMinutes}</td><td>${completionTime}</td>`;
+      queueBody.appendChild(tr);
+      
+      cumulativeTime = completionTime;
+    }
+    highlightTop();
+  }
+  function highlightTop() {
+    [...queueBody.querySelectorAll('tr')].forEach(tr => tr.classList.remove('highlight'));
+    const first = queueBody.querySelector('tr');
+    if (first) first.classList.add('highlight');
+  }
+  function popTopRow() {
+    const first = queueBody.querySelector('tr');
+    if (first) first.remove();
+    highlightTop();
+  }
+
+  function updateInfo() {
+    roundNowEl.textContent = (phase === 'idle') ? '–' : currentRound;
+    roundTotalEl.textContent = targetRounds || '–';
+    const thisWork = (phase === 'idle') ? '–' : currentRound;
+    const nextWork = (phase === 'idle' || currentRound >= targetRounds) ? '–' : currentRound + 1;
+    currentWorkEl.textContent = thisWork;
+    nextWorkEl.textContent = nextWork;
+  }
+
+  function reset() {
+    clearTimer();
+    targetRounds = 0;
+    currentRound = 0;
+    phase = 'idle';
+    secondsLeft = 0;
+    elapsedSeconds = 0;
+    phaseStartElapsed = 0;
+    phaseEl.className = 'work';
+    phaseEl.textContent = 'READY';
+    clockEl.textContent = '00:00';
+    elapsedEl.textContent = '00:00:00';
+    updateInfo();
+    startBtn.textContent = 'Start';
+    queueBody.innerHTML = '';
+  }
+
+  function beginWork() {
+    phase = 'work';
+    const workMinutes = currentRound;
+    secondsLeft = workMinutes * 60;
+    phaseStartElapsed = elapsedSeconds;
+    phaseEl.textContent = 'WORK';
+    phaseEl.className = 'work';
+    clockEl.textContent = mmss(secondsLeft);
+    updateInfo();
+    highlightTop();
+  }
+
+  function beginRest() {
+    phase = 'rest';
+    const restMinutes = 1;
+    secondsLeft = restMinutes * 60;
+    phaseStartElapsed = elapsedSeconds;
+    phaseEl.textContent = 'REST';
+    phaseEl.className = 'rest';
+    clockEl.textContent = mmss(secondsLeft);
+  }
+
+  function complete() {
+    phase = 'done';
+    clearTimer();            // elapsed timer stops naturally here
+    phaseEl.textContent = 'COMPLETED';
+    phaseEl.className = 'done';
+    clockEl.textContent = '00:00';
+    updateInfo();
+    queueBody.innerHTML = '';
+  }
+
+  function startFlow() {
+    targetRounds = Math.max(1, Math.floor(Number(roundsInput.value || 0)));
+    currentRound = 1;
+    buildQueue(targetRounds);
+    elapsedSeconds = 0;
+    elapsedEl.textContent = hms(elapsedSeconds);
+    beginWork();
+
+    clearTimer();
+    tick = setInterval(() => {
+      // total elapsed always counts while running
+      elapsedSeconds += 1;
+      elapsedEl.textContent = hms(elapsedSeconds);
+
+      // Calculate countdown based on elapsed time to stay in sync
+      const phaseDuration = (phase === 'work') ? currentRound * 60 : 60;
+      const elapsedInPhase = elapsedSeconds - phaseStartElapsed;
+      secondsLeft = Math.max(0, phaseDuration - elapsedInPhase);
+      clockEl.textContent = mmss(secondsLeft);
+
+      if (secondsLeft === 0) {
+        // Transition
+        if (phase === 'work') {
+          beginRest();
+        } else if (phase === 'rest') {
+          // Round fully finished → destroy the top row
+          popTopRow();
+          if (currentRound >= targetRounds) {
+            complete(); // stops elapsed at natural end
+          } else {
+            currentRound += 1;
+            beginWork();
+          }
+        }
+      }
+    }, 1000);
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (phase === 'idle' || phase === 'done') {
+      startBtn.textContent = 'Reset';
+      startFlow();
+    } else {
+      reset();
+    }
+  });
+
+  // init
+  reset();
+})();
+</script>
+</body>
+</html>
