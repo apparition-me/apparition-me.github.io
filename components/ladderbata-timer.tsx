@@ -120,16 +120,7 @@ export function LadderbataTimer() {
 
 
   const reset = () => {
-    clearTimer()
-    setState({
-      targetRounds: state.targetRounds,
-      currentRound: 0,
-      phase: 'idle',
-      secondsLeft: 0,
-      elapsedSeconds: 0,
-      phaseStartElapsed: 0,
-    })
-    setQueue([])
+    window.location.reload()
   }
 
   const beginWork = () => {
