@@ -40,6 +40,7 @@ export function RoundSelectionDrawer({
 
   function handleSubmit() {
     onRoundsChange(rounds)
+    setOpen(false)
     onStart()
   }
 
@@ -55,7 +56,7 @@ export function RoundSelectionDrawer({
   const totalWorkoutTime = calculateTotalTime(rounds)
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={open} onOpenChange={() => {}} modal={false}>
       <DrawerTrigger asChild>
         <Button variant="outline" className="font-mono">
           Reset Timer
