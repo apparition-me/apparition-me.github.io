@@ -108,10 +108,6 @@ export function LadderbataTimer() {
     setTableData(transformQueueToTableData(newQueue))
   }
 
-  const popTopRow = () => {
-    setQueue(prev => prev.slice(1))
-    // Don't remove from tableData - keep full table visible
-  }
 
   const reset = () => {
     clearTimer()
@@ -191,7 +187,6 @@ export function LadderbataTimer() {
             }
           } else if (prev.phase === 'rest') {
             // Round completed
-            popTopRow()
             if (prev.currentRound >= prev.targetRounds) {
               complete()
               return {
