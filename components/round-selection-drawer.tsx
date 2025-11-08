@@ -57,11 +57,13 @@ export function RoundSelectionDrawer({
 
   return (
     <Drawer open={open} onOpenChange={() => {}} modal={false}>
-      <DrawerTrigger asChild>
-        <Button variant="outline" className="font-mono">
-          Reset Timer
-        </Button>
-      </DrawerTrigger>
+      {isRunning && (
+        <DrawerTrigger asChild>
+          <Button variant="outline" className="font-mono">
+            Reset Timer
+          </Button>
+        </DrawerTrigger>
+      )}
       <DrawerContent>
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader>
