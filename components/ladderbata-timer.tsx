@@ -236,13 +236,13 @@ export function LadderbataTimer() {
             <header className="flex items-center justify-between mb-6">
               <div className="font-bold text-lg font-mono">LADDERBATA</div>
               <div className="flex items-center gap-3">
-                <Button 
-                  onClick={handleStart}
-                  variant="outline"
-                  className="font-mono"
-                >
-                  Reset Timer
-                </Button>
+                <RoundSelectionDrawer
+                  currentRounds={state.targetRounds}
+                  onRoundsChange={handleRoundsChange}
+                  onStart={handleStart}
+                  onReset={handleStart}
+                  isRunning={true}
+                />
               </div>
             </header>
 

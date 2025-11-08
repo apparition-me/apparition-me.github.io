@@ -19,12 +19,16 @@ interface RoundSelectionDrawerProps {
   currentRounds: number
   onRoundsChange: (rounds: number) => void
   onStart: () => void
+  onReset?: () => void
+  isRunning?: boolean
 }
 
 export function RoundSelectionDrawer({ 
   currentRounds, 
   onRoundsChange, 
-  onStart 
+  onStart,
+  onReset,
+  isRunning = false
 }: RoundSelectionDrawerProps) {
   const [rounds, setRounds] = React.useState(currentRounds)
   const [open, setOpen] = React.useState(true)
@@ -106,16 +110,37 @@ export function RoundSelectionDrawer({
             </div>
           </div>
           <DrawerFooter>
-            <DrawerClose asChild>
-              <Button onClick={handleSubmit} className="font-mono">
-                Start Timer
-              </Button>
-            </DrawerClose>
-            <DrawerClose asChild>
-              <Button variant="outline" className="font-mono">
-                Cancel
-              </Button>
-            </DrawerClose>
+            {!isRunning ? (
+              <>
+                <DrawerClose asChild>
+                  <Button onClick={handleSubmit} className="font-mono">
+                    Start Timer
+                  </Button>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="font-mono">
+                    Cancel
+                  </Button>
+                </DrawerClose>
+              </>
+            ) : (
+              <>
+                <DrawerClose asChild>
+                  <Button 
+                    onClick={onReset} 
+                    variant="destructive" 
+                    className="font-mono"
+                  >
+                    Reset Timer
+                  </Button>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="font-mono">
+                    Cancel
+                  </Button>
+                </DrawerClose>
+              </>
+            )}
           </DrawerFooter>
         </div>
       </DrawerContent>
