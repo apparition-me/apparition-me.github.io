@@ -187,8 +187,84 @@ export function LadderbataTimer() {
       setCountdownSeconds(prev => {
         if (prev <= 1) {
           clearInterval(countdownTick)
-          setTick(null) // Clear the tick state
-          setTimeout(() => startWorkTimer(), 100) // Small delay to ensure cleanup
+          setTick(null)
+          // Start work phase immediately after countdown
+          setState(prevState => ({
+            ...prevState,
+            phase: 'work',
+            secondsLeft: prevState.currentRound * 60,
+            phaseStartElapsed: prevState.elapsedSeconds,
+          }))
+          
+          // Start main timer
+          setTimeout(() => {
+            const workTick = setInterval(() => {
+              setState(prev => {
+                const newElapsed = prev.elapsedSeconds + 1
+                const phaseDuration = prev.phase === 'work' ? prev.currentRound * 60 : 60
+                const elapsedInPhase = newElapsed - prev.phaseStartElapsed
+                const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
+                
+                console.log('Timer tick:', {
+                  phase: prev.phase,
+                  currentRound: prev.currentRound,
+                  newElapsed,
+                  elapsedInPhase,
+                  newSecondsLeft,
+                  phaseDuration
+                })
+
+                if (newSecondsLeft === 0) {
+                  if (prev.phase === 'work') {
+                    // Transition to rest
+                    return {
+                      ...prev,
+                      elapsedSeconds: newElapsed,
+                      phase: 'rest',
+                      secondsLeft: 60,
+                      phaseStartElapsed: newElapsed,
+                    }
+                  } else if (prev.phase === 'rest') {
+                    // Round completed
+                    if (prev.currentRound >= prev.targetRounds) {
+                      complete()
+                      return {
+                        ...prev,
+                        elapsedSeconds: newElapsed,
+                        phase: 'done',
+                        secondsLeft: 0,
+                      }
+                    } else {
+                      // Next round
+                      const nextRound = prev.currentRound + 1
+                      return {
+                        ...prev,
+                        elapsedSeconds: newElapsed,
+                        currentRound: nextRound,
+                        phase: 'work',
+                        secondsLeft: nextRound * 60,
+                        phaseStartElapsed: newElapsed,
+                      }
+                    }
+                  }
+                }
+
+                return {
+                  ...prev,
+                  elapsedSeconds: newElapsed,
+                  secondsLeft: newSecondsLeft,
+                }
+              })
+            }, 1000)
+            
+            setTick(workTick)
+            
+            // Trigger notification
+            toast.success('Work Round Started', {
+              description: `Round 1 - 1 minute of work`,
+            })
+          }, 200)
+          
           return 0
         }
         return prev - 1
@@ -196,84 +272,6 @@ export function LadderbataTimer() {
     }, 1000)
     
     setTick(countdownTick)
-  }
-
-  const startWorkTimer = () => {
-    setState(prev => ({
-      ...prev,
-      phase: 'work',
-      secondsLeft: prev.currentRound * 60,
-      phaseStartElapsed: prev.elapsedSeconds,
-    }))
-    
-    // Start the work/rest timer
-    clearTimer()
-    const newTick = setInterval(() => {
-      setState(prev => {
-        const newElapsed = prev.elapsedSeconds + 1
-        const phaseDuration = prev.phase === 'work' ? prev.currentRound * 60 : 60
-        const elapsedInPhase = newElapsed - prev.phaseStartElapsed
-        const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
-        
-        console.log('Timer tick:', {
-          phase: prev.phase,
-          currentRound: prev.currentRound,
-          newElapsed,
-          elapsedInPhase,
-          newSecondsLeft,
-          phaseDuration
-        })
-
-        if (newSecondsLeft === 0) {
-          if (prev.phase === 'work') {
-            // Transition to rest
-            return {
-              ...prev,
-              elapsedSeconds: newElapsed,
-              phase: 'rest',
-              secondsLeft: 60,
-              phaseStartElapsed: newElapsed,
-            }
-          } else if (prev.phase === 'rest') {
-            // Round completed
-            if (prev.currentRound >= prev.targetRounds) {
-              complete()
-              return {
-                ...prev,
-                elapsedSeconds: newElapsed,
-                phase: 'done',
-                secondsLeft: 0,
-              }
-            } else {
-              // Next round
-              const nextRound = prev.currentRound + 1
-              // No need to scroll carousel - completed rounds are filtered out so active round stays leftmost
-              return {
-                ...prev,
-                elapsedSeconds: newElapsed,
-                currentRound: nextRound,
-                phase: 'work',
-                secondsLeft: nextRound * 60,
-                phaseStartElapsed: newElapsed,
-              }
-            }
-          }
-        }
-
-        return {
-          ...prev,
-          elapsedSeconds: newElapsed,
-          secondsLeft: newSecondsLeft,
-        }
-      })
-    }, 1000)
-    
-    setTick(newTick)
-    
-    // Trigger Sonner notification when work round starts
-    toast.success('Work Round Started', {
-      description: `Round ${state.currentRound} - ${state.currentRound} minutes of work`,
-    })
   }
 
   const handleRoundsChange = (rounds: number) => {
@@ -342,7 +340,7 @@ export function LadderbataTimer() {
 
       {/* Countdown Dialog */}
       <Dialog open={state.phase === 'countdown'}>
-        <DialogContent className="bg-white border-none shadow-2xl max-w-md [&>button]:hidden">
+        <DialogContent className="bg-white border-none max-w-md [&>button]:hidden">
           <div className="flex flex-col items-center justify-center py-8">
             <h1 className="text-9xl font-bold text-black font-mono mb-6">
               {countdownSeconds}
