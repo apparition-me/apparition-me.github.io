@@ -223,29 +223,21 @@ export function LadderbataTimer() {
 
   return (
     <div className="min-h-screen bg-background p-7">
-      {/* Always show drawer for idle/done states, hide main timer interface */}
-      {state.phase === 'idle' || state.phase === 'done' ? (
-        <RoundSelectionDrawer
-          currentRounds={state.targetRounds}
-          onRoundsChange={handleRoundsChange}
-          onStart={handleStart}
-        />
-      ) : (
+      {/* Single drawer instance that handles all states */}
+      <RoundSelectionDrawer
+        currentRounds={state.targetRounds}
+        onRoundsChange={handleRoundsChange}
+        onStart={handleStart}
+        onReset={handleStart}
+        isRunning={state.phase === 'work' || state.phase === 'rest'}
+      />
+      
+      {/* Timer interface - only show when NOT in idle/done states */}
+      {state.phase !== 'idle' && state.phase !== 'done' && (
         <>
           <main className="max-w-3xl mx-auto bg-card border rounded-2xl shadow-lg p-6">
             <header className="flex items-center justify-between mb-6">
               <div className="font-bold text-lg font-mono">LADDERBATA</div>
-              {(state.phase === 'work' || state.phase === 'rest') && (
-                <div className="flex items-center gap-3">
-                  <RoundSelectionDrawer
-                    currentRounds={state.targetRounds}
-                    onRoundsChange={handleRoundsChange}
-                    onStart={handleStart}
-                    onReset={handleStart}
-                    isRunning={true}
-                  />
-                </div>
-              )}
             </header>
 
             <h1 className={`text-5xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
