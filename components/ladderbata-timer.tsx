@@ -7,6 +7,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/com
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
+import { Spinner } from "@/components/ui/spinner"
 import { TimerReset } from "lucide-react"
 
 interface TimerState {
@@ -372,8 +373,12 @@ export function LadderbataTimer() {
              
             </div>
 
-            <div className="text-center text-xl font-mono">
-              <span className="text-3xl">{hms(state.elapsedSeconds)}</span>
+            <div className="flex items-center justify-between px-6 py-4 font-mono">
+              <div className="flex items-center space-x-2">
+                <Spinner className="text-muted-foreground" />
+                <span className="text-lg font-bold">Running Clock Time:</span>
+              </div>
+              <span className="text-3xl font-bold tabular-nums">{hms(state.elapsedSeconds)}</span>
             </div>
           </main>
 
