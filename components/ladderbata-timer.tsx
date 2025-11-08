@@ -158,29 +158,6 @@ export function LadderbataTimer() {
     window.location.reload()
   }
 
-  const beginWork = () => {
-    const workMinutes = state.currentRound
-    setState(prev => ({
-      ...prev,
-      phase: 'work',
-      secondsLeft: workMinutes * 60,
-      phaseStartElapsed: prev.elapsedSeconds,
-    }))
-    
-    // Trigger Sonner notification when work round starts
-    toast.success('Work Round Started', {
-      description: `Round ${state.currentRound} - ${workMinutes} minutes of work`,
-    })
-  }
-
-  const beginRest = () => {
-    setState(prev => ({
-      ...prev,
-      phase: 'rest',
-      secondsLeft: 60, // 1 minute rest
-      phaseStartElapsed: prev.elapsedSeconds,
-    }))
-  }
 
   const complete = () => {
     clearTimer()
@@ -236,6 +213,15 @@ export function LadderbataTimer() {
         const phaseDuration = prev.phase === 'work' ? prev.currentRound * 60 : 60
         const elapsedInPhase = newElapsed - prev.phaseStartElapsed
         const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
+        
+        console.log('Timer tick:', {
+          phase: prev.phase,
+          currentRound: prev.currentRound,
+          newElapsed,
+          elapsedInPhase,
+          newSecondsLeft,
+          phaseDuration
+        })
 
         if (newSecondsLeft === 0) {
           if (prev.phase === 'work') {
