@@ -4,6 +4,8 @@ import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { RoundSelectionDrawer } from "@/components/round-selection-drawer"
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface TimerState {
   targetRounds: number
@@ -46,6 +48,8 @@ export function LadderbataTimer() {
 
   const [queue, setQueue] = React.useState<QueueItem[]>([])
   const [tick, setTick] = React.useState<NodeJS.Timeout | null>(null)
+  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
+  const [currentCarouselIndex, setCurrentCarouselIndex] = React.useState(0)
 
   const mmss = (s: number) => {
     const m = Math.floor(s / 60).toString().padStart(2, '0')
@@ -200,6 +204,10 @@ export function LadderbataTimer() {
             } else {
               // Next round
               const nextRound = prev.currentRound + 1
+              // Auto-advance carousel to next round
+              if (carouselApi) {
+                carouselApi.scrollTo(nextRound - 1)
+              }
               return {
                 ...prev,
                 elapsedSeconds: newElapsed,
@@ -256,6 +264,27 @@ export function LadderbataTimer() {
     }
   }
 
+  const getProgressPercentage = () => {
+    if (state.phase === 'work') {
+      const totalWorkSeconds = state.currentRound * 60
+      const elapsedWorkSeconds = totalWorkSeconds - state.secondsLeft
+      return (elapsedWorkSeconds / totalWorkSeconds) * 100
+    } else if (state.phase === 'rest') {
+      const totalRestSeconds = 60
+      const elapsedRestSeconds = totalRestSeconds - state.secondsLeft
+      return (elapsedRestSeconds / totalRestSeconds) * 100
+    }
+    return 0
+  }
+
+  const getProgressStyle = () => {
+    const percentage = getProgressPercentage()
+    const baseColor = state.phase === 'work' ? '34, 197, 94' : '239, 68, 68' // green-500 or red-500
+    return {
+      background: `linear-gradient(to right, rgba(${baseColor}, 1) ${percentage}%, rgba(${baseColor}, 0.3) ${percentage}%)`
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background p-7">
       {/* Single drawer instance that handles all states */}
@@ -271,63 +300,70 @@ export function LadderbataTimer() {
       {state.phase !== 'idle' && state.phase !== 'done' && (
         <>
           <main className="max-w-3xl mx-auto bg-card border rounded-2xl shadow-lg p-6">
-            <header className="flex items-center justify-between mb-6">
-              <div className="font-bold text-lg font-mono">LADDERBATA</div>
+            <header 
+              className="flex items-center justify-center mb-6 w-full py-3 rounded-lg"
+              style={getProgressStyle()}
+            >
+              <div className="font-bold text-lg font-mono text-white bg-black p-2">LADDERBATA</div>
             </header>
 
-            <h1 className={`text-5xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
+            <h1 className={` text-8xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
               {getPhaseText()}
             </h1>
+             <div className={`font-mono text-8xl mt-2 tabular-nums  text-center  ${getPhaseClass()}`}>
+                {mmss(state.secondsLeft)}
+              </div>
 
-            <div className="text-center space-y-2 mb-4">
-              <div className="font-bold font-mono">
+            <div className="text-center space-y-2 my-4">
+              <div className="font-bold font-mono text-4xl">
                 ROUND: {state.currentRound} OF {state.targetRounds}
               </div>
-              <div className="font-bold font-mono">
-                CURRENT ROUND: {state.currentRound} MINUTES OF WORK
-              </div>
+
               <div className="text-muted-foreground font-bold font-mono">
                 NEXT ROUND: {state.currentRound >= state.targetRounds ? '–' : state.currentRound + 1} MINUTES OF WORK
               </div>
-              <div className="text-muted-foreground font-mono text-6xl mt-2 tabular-nums">
-                {mmss(state.secondsLeft)}
-              </div>
+             
             </div>
 
             <div className="text-center text-xl font-mono">
-              TOTAL ELAPSED: <span className="text-2xl">{hms(state.elapsedSeconds)}</span>
+              <span className="text-3xl">{hms(state.elapsedSeconds)}</span>
             </div>
           </main>
 
           {state.targetRounds > 0 && (
             <section className="max-w-3xl mx-auto mt-6">
-              <div className="bg-card border rounded-xl">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left p-3 font-bold">ROUND</th>
-                      <th className="text-left p-3 font-bold">WORK START</th>
-                      <th className="text-left p-3 font-bold">REST START</th>
-                      <th className="text-left p-3 font-bold">WORK MINUTES</th>
-                      <th className="text-left p-3 font-bold">ELAPSED TIME ON COMPLETION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {generateTableData(state.targetRounds).map((item, index) => (
-                      <tr 
-                        key={item.round} 
-                        className={index === 0 && state.currentRound ? 'bg-green-50' : ''}
-                      >
-                        <td className="p-3 border-b border-border/50">{item.round}</td>
-                        <td className="p-3 border-b border-border/50">{item.workStart}</td>
-                        <td className="p-3 border-b border-border/50">{item.restStart}</td>
-                        <td className="p-3 border-b border-border/50">{item.workMinutes}</td>
-                        <td className="p-3 border-b border-border/50">{item.elapsedTimeOnCompletion}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Carousel 
+                setApi={setCarouselApi}
+                opts={{
+                  align: "start",
+                  loop: false,
+                  watchDrag: false,
+                }}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {generateTableData(state.targetRounds).map((item, index) => (
+                    <CarouselItem key={item.round} className="md:basis-1/2 lg:basis-1/3">
+                      <Card className={`${index === state.currentRound - 1 ? 'ring-2 ring-green-500' : ''}`}>
+                        <CardHeader>
+                          <CardTitle className="text-center font-mono">
+                            ROUND {item.round} ({item.workMinutes} MINUTES)
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 font-mono">
+                          <div className="text-center">
+                            <div className="font-bold">WORK: {mmss(item.workMinutes * 60)}</div>
+                            <div className="font-bold">REST: {mmss(60)}</div>
+                            <div className="font-bold text-sm text-muted-foreground">
+                              ELAPSED TIME ON COMPLETION: {mmss(item.elapsedTimeOnCompletion * 60)}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
             </section>
           )}
         </>
