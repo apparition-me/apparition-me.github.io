@@ -44,13 +44,16 @@ export function RoundSelectionDrawer({
     onStart()
   }
 
-  // Calculate total workout time
+  // Calculate total workout time - matches buildQueue logic exactly
   const calculateTotalTime = (rounds: number) => {
-    let totalTime = 0
+    let cumulativeTime = 0
     for (let r = 1; r <= rounds; r++) {
-      totalTime += r + 1 // work minutes + 1 minute rest
+      const workMinutes = r
+      const restStart = cumulativeTime + workMinutes
+      const completionTime = restStart + 1 // 1 min rest
+      cumulativeTime = completionTime
     }
-    return totalTime - 1 // Remove last rest period
+    return cumulativeTime
   }
 
   const totalWorkoutTime = calculateTotalTime(rounds)
