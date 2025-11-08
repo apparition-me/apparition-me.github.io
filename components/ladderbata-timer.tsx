@@ -351,7 +351,7 @@ export function LadderbataTimer() {
 
       {/* Countdown Dialog */}
       <Dialog open={state.phase === 'countdown'}>
-        <DialogContent className="bg-white border-none shadow-2xl max-w-md">
+        <DialogContent className="bg-white border-none shadow-2xl max-w-md [&>button]:hidden">
           <div className="flex flex-col items-center justify-center py-8">
             <h1 className="text-9xl font-bold text-black font-mono mb-6">
               {countdownSeconds}
