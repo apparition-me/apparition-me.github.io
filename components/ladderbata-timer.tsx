@@ -96,6 +96,34 @@ export function LadderbataTimer() {
     return tableRows
   }
 
+  // Generate carousel data - only show current and future rounds
+  const generateCarouselData = (rounds: number, currentRound: number) => {
+    const tableRows = []
+    let cumulativeTime = 0
+    
+    for (let r = 1; r <= rounds; r++) {
+      const workStart = cumulativeTime
+      const workMinutes = r
+      const restStart = cumulativeTime + workMinutes
+      const completionTime = restStart + 1 // 1 min rest
+      
+      // Only include current and future rounds
+      if (r >= currentRound) {
+        tableRows.push({
+          round: r,
+          workStart,
+          restStart,
+          workMinutes,
+          elapsedTimeOnCompletion: completionTime,
+        })
+      }
+      
+      cumulativeTime = completionTime
+    }
+    
+    return tableRows
+  }
+
   const buildQueue = (total: number) => {
     console.log('buildQueue called with total:', total)
     const newQueue: QueueItem[] = []
@@ -204,10 +232,7 @@ export function LadderbataTimer() {
             } else {
               // Next round
               const nextRound = prev.currentRound + 1
-              // Auto-advance carousel to next round (center the active round)
-              if (carouselApi) {
-                setTimeout(() => carouselApi.scrollTo(nextRound - 1), 100)
-              }
+              // No need to scroll carousel - completed rounds are filtered out so active round stays leftmost
               return {
                 ...prev,
                 elapsedSeconds: newElapsed,
@@ -342,21 +367,21 @@ export function LadderbataTimer() {
                 className="w-full"
               >
                 <CarouselContent>
-                  {generateTableData(state.targetRounds).map((item, index) => (
+                  {generateCarouselData(state.targetRounds, state.currentRound).map((item, index) => (
                     <CarouselItem key={item.round} className="md:basis-1/2 lg:basis-1/3">
-                      <Card className={`${index === state.currentRound - 1 ? 'bg-green-500' : ''}`}>
+                      <Card className={`${index === 0 ? 'bg-green-500' : ''}`}>
                         <CardHeader>
                           
-                          <CardTitle className={`text-center font-mono text-4xl uppercase ${index === state.currentRound - 1 ? 'text-white' : ''}`}>
+                          <CardTitle className={`text-center font-mono text-4xl uppercase ${index === 0 ? 'text-white' : ''}`}>
                             ROUND
-                            <h1 className={`text-center font-mono text-8xl ${index === state.currentRound - 1 ? 'text-white' : ''}`}>{item.round}</h1>
+                            <h1 className={`text-center font-mono text-8xl ${index === 0 ? 'text-white' : ''}`}>{item.round}</h1>
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 font-mono">
                           <div className="text-center">
-                            <div className={`font-bold ${index === state.currentRound - 1 ? 'text-white' : ''}`}>WORK: {mmss(item.workMinutes * 60)}</div>
-                            <div className={`font-bold ${index === state.currentRound - 1 ? 'text-white' : ''}`}>REST: {mmss(60)}</div>
-                            <div className={`font-bold text-sm uppercase tracking-tight mt-4 ${index === state.currentRound - 1 ? 'text-white' : 'text-muted-foreground'}`}>
+                            <div className={`font-bold ${index === 0 ? 'text-white' : ''}`}>WORK: {mmss(item.workMinutes * 60)}</div>
+                            <div className={`font-bold ${index === 0 ? 'text-white' : ''}`}>REST: {mmss(60)}</div>
+                            <div className={`font-bold text-sm uppercase tracking-tight mt-4 ${index === 0 ? 'text-white' : 'text-muted-foreground'}`}>
                               CLOCK TIME: {mmss(item.elapsedTimeOnCompletion * 60)}
                             </div>
                           </div>
