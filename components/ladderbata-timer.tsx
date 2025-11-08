@@ -350,7 +350,7 @@ export function LadderbataTimer() {
       {/* Timer interface - only show when NOT in idle/done/countdown states */}
       {state.phase !== 'idle' && state.phase !== 'done' && state.phase !== 'countdown' && (
         <>
-          <main className="max-w-3xl mx-auto bg-card border rounded-2xl shadow-lg p-6">
+          <main className="max-w-3xl mx-auto bg-card  rounded-2xl p-0">
             <header 
               className="flex items-center justify-center mb-6 w-full py-3 rounded-lg"
               style={getProgressStyle()}
@@ -393,28 +393,37 @@ export function LadderbataTimer() {
                 className="w-full"
               >
                 <CarouselContent>
-                  {generateCarouselData(state.targetRounds, state.currentRound).map((item, index) => (
-                    <CarouselItem key={item.round} className="md:basis-1/2 lg:basis-1/3">
-                      <Card className={`${index === 0 ? 'bg-green-500' : ''}`}>
-                        <CardHeader>
-                          
-                          <CardTitle className={`text-center font-mono text-4xl uppercase ${index === 0 ? 'text-white' : ''}`}>
-                            ROUND
-                            <h1 className={`text-center font-mono text-8xl ${index === 0 ? 'text-white' : ''}`}>{item.round}</h1>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 font-mono">
-                          <div className="text-center">
-                            <div className={`font-bold ${index === 0 ? 'text-white' : ''}`}>WORK: {mmss(item.workMinutes * 60)}</div>
-                            <div className={`font-bold ${index === 0 ? 'text-white' : ''}`}>REST: {mmss(60)}</div>
-                            <div className={`font-bold text-sm uppercase tracking-tight mt-4 ${index === 0 ? 'text-white' : 'text-muted-foreground'}`}>
-                              CLOCK TIME: {mmss(item.elapsedTimeOnCompletion * 60)}
+                  {generateCarouselData(state.targetRounds, state.currentRound).map((item, index) => {
+                    const isActiveCard = index === 0
+                    const cardBgClass = isActiveCard 
+                      ? (state.phase === 'rest' ? 'bg-red-500' : 'bg-green-500')
+                      : ''
+                    const textClass = isActiveCard ? 'text-white' : ''
+                    const mutedTextClass = isActiveCard ? 'text-white' : 'text-muted-foreground'
+                    
+                    return (
+                      <CarouselItem key={item.round} className="md:basis-1/2 lg:basis-1/3">
+                        <Card className={cardBgClass}>
+                          <CardHeader>
+                            
+                            <CardTitle className={`text-center font-mono text-4xl uppercase ${textClass}`}>
+                              ROUND
+                              <h1 className={`text-center font-mono text-8xl ${textClass}`}>{item.round}</h1>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2 font-mono">
+                            <div className="text-center">
+                              <div className={`font-bold ${textClass}`}>WORK: {mmss(item.workMinutes * 60)}</div>
+                              <div className={`font-bold ${textClass}`}>REST: {mmss(60)}</div>
+                              <div className={`font-bold text-sm uppercase tracking-tight mt-4 ${mutedTextClass}`}>
+                                CLOCK TIME: {mmss(item.elapsedTimeOnCompletion * 60)}
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  ))}
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    )
+                  })}
                 </CarouselContent>
               </Carousel>
             </section>
