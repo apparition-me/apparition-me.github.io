@@ -187,7 +187,8 @@ export function LadderbataTimer() {
       setCountdownSeconds(prev => {
         if (prev <= 1) {
           clearInterval(countdownTick)
-          startWorkTimer()
+          setTick(null) // Clear the tick state
+          setTimeout(() => startWorkTimer(), 100) // Small delay to ensure cleanup
           return 0
         }
         return prev - 1
