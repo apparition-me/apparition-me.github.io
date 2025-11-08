@@ -31,13 +31,16 @@ interface WorkoutTableProps {
 export function WorkoutTable({ data, currentRound }: WorkoutTableProps) {
   const [hasError, setHasError] = React.useState(false)
 
+  // Debug: Log data length
+  console.log('WorkoutTable data length:', data?.length, 'data:', data)
+
   try {
     if (!data || data.length === 0) {
       return <div className="text-center text-muted-foreground p-4">No workout data available</div>
     }
 
     return (
-      <div className="bg-card border rounded-xl overflow-hidden">
+      <div className="bg-card border rounded-xl">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
