@@ -41,16 +41,15 @@ export function WorkoutTable({ data, currentRound }: WorkoutTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="font-bold">ID</TableHead>
-              <TableHead className="font-bold">Description</TableHead>
-              <TableHead className="font-bold">Quantity</TableHead>
-              <TableHead className="font-bold">Price</TableHead>
-              <TableHead className="font-bold">Total</TableHead>
+              <TableHead className="font-bold">DESCRIPTION</TableHead>
+              <TableHead className="font-bold">QUANTITY</TableHead>
+              <TableHead className="font-bold">PRICE</TableHead>
+              <TableHead className="font-bold">TOTAL</TableHead>
               {/* Additional columns from original table */}
-              <TableHead className="font-bold">Work Start</TableHead>
-              <TableHead className="font-bold">Rest Start</TableHead>
-              <TableHead className="font-bold">Work Minutes</TableHead>
-              <TableHead className="font-bold">Elapsed Time on Completion</TableHead>
+              <TableHead className="font-bold">WORK START</TableHead>
+              <TableHead className="font-bold">REST START</TableHead>
+              <TableHead className="font-bold">WORK MINUTES</TableHead>
+              <TableHead className="font-bold">ELAPSED TIME ON COMPLETION</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,8 +58,7 @@ export function WorkoutTable({ data, currentRound }: WorkoutTableProps) {
                 key={item.id} 
                 className={index === 0 && currentRound ? 'bg-green-50' : ''}
               >
-                <TableCell className="border-b border-border/50">{item.id}</TableCell>
-                <TableCell className="border-b border-border/50">{item.description}</TableCell>
+                <TableCell className="border-b border-border/50">{item.description.toUpperCase()}</TableCell>
                 <TableCell className="border-b border-border/50">{item.quantity}</TableCell>
                 <TableCell className="border-b border-border/50">{item.price}</TableCell>
                 <TableCell className="border-b border-border/50">{item.total}</TableCell>

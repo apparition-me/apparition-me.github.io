@@ -110,6 +110,7 @@ export function LadderbataTimer() {
 
   const popTopRow = () => {
     setQueue(prev => prev.slice(1))
+    // Don't remove from tableData - keep full table visible
   }
 
   const reset = () => {
@@ -123,6 +124,7 @@ export function LadderbataTimer() {
       phaseStartElapsed: 0,
     })
     setQueue([])
+    setTableData([])
   }
 
   const beginWork = () => {
