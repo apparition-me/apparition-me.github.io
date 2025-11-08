@@ -17,6 +17,7 @@ interface TimerState {
   secondsLeft: number
   elapsedSeconds: number
   phaseStartElapsed: number
+  elapsedMilliseconds: number
 }
 
 interface QueueItem {
@@ -47,6 +48,7 @@ export function LadderbataTimer() {
     secondsLeft: 0,
     elapsedSeconds: 0,
     phaseStartElapsed: 0,
+    elapsedMilliseconds: 0,
   })
 
   const [queue, setQueue] = React.useState<QueueItem[]>([])
@@ -67,6 +69,14 @@ export function LadderbataTimer() {
     const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0')
     const sec = Math.floor(s % 60).toString().padStart(2, '0')
     return `${h}:${m}:${sec}`
+  }
+
+  const hmsWithMilliseconds = (totalMs: number) => {
+    const h = Math.floor(totalMs / 3600000).toString().padStart(2, '0')
+    const m = Math.floor((totalMs % 3600000) / 60000).toString().padStart(2, '0')
+    const s = Math.floor((totalMs % 60000) / 1000).toString().padStart(2, '0')
+    const ms = Math.floor((totalMs % 1000) / 10).toString().padStart(2, '0')
+    return `${h}:${m}:${s}.${ms}`
   }
 
   const clearTimer = () => {
@@ -204,16 +214,20 @@ export function LadderbataTimer() {
 
   // COMPLETELY SEPARATE MAIN TIMER FUNCTION
   const startMainTimer = () => {
+    const startTime = Date.now()
     setState(prev => ({
       ...prev,
       phase: 'work',
       secondsLeft: prev.currentRound * 60,
       phaseStartElapsed: prev.elapsedSeconds,
+      elapsedMilliseconds: 0,
     }))
     
     const workTick = setInterval(() => {
       setState(prev => {
-        const newElapsed = prev.elapsedSeconds + 1
+        const currentTime = Date.now()
+        const totalElapsedMs = currentTime - startTime
+        const newElapsed = Math.floor(totalElapsedMs / 1000)
         const phaseDuration = prev.phase === 'work' ? prev.currentRound * 60 : 60
         const elapsedInPhase = newElapsed - prev.phaseStartElapsed
         const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
@@ -258,9 +272,10 @@ export function LadderbataTimer() {
           ...prev,
           elapsedSeconds: newElapsed,
           secondsLeft: newSecondsLeft,
+          elapsedMilliseconds: totalElapsedMs,
         }
       })
-    }, 1000)
+    }, 100)
     
     setTick(workTick)
     
@@ -374,11 +389,16 @@ export function LadderbataTimer() {
             </div>
 
             <div className="flex justify-center">
-              <div className="flex items-center gap-2 px-6 py-4 font-mono bg-red-500">
-                <Spinner className="text-muted-foreground" />
-                <span className="text-lg font-bold uppercase">Running Clock Time:</span>
-                <span className="text-lg font-bold tabular-nums">{hms(state.elapsedSeconds)}</span>
+
+              <div className="flex items-center gap-2 px-6 py-4 font-mono bg-black">
+                <span className="text-lg font-bold uppercase text-white">Clock Time:</span>
+                <span className="text-lg font-bold tabular-nums text-white">{hmsWithMilliseconds(state.elapsedMilliseconds)}</span>
+                <Spinner className="text-white" />
               </div>
+            
+            
+            
+            
             </div>
           </main>
 
