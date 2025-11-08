@@ -223,82 +223,85 @@ export function LadderbataTimer() {
 
   return (
     <div className="min-h-screen bg-background p-7">
-      <main className="max-w-3xl mx-auto bg-card border rounded-2xl shadow-lg p-6">
-        <header className="flex items-center justify-between mb-6">
-          <div className="font-bold text-lg font-mono">LADDERBATA</div>
-          <div className="flex items-center gap-3">
-            {state.phase === 'idle' || state.phase === 'done' ? (
-              <RoundSelectionDrawer
-                currentRounds={state.targetRounds}
-                onRoundsChange={handleRoundsChange}
-                onStart={handleStart}
-              />
-            ) : (
-              <Button 
-                onClick={handleStart}
-                variant="outline"
-                className="font-mono"
-              >
-                Reset
-              </Button>
-            )}
-          </div>
-        </header>
+      {/* Always show drawer for idle/done states, hide main timer interface */}
+      {state.phase === 'idle' || state.phase === 'done' ? (
+        <RoundSelectionDrawer
+          currentRounds={state.targetRounds}
+          onRoundsChange={handleRoundsChange}
+          onStart={handleStart}
+        />
+      ) : (
+        <>
+          <main className="max-w-3xl mx-auto bg-card border rounded-2xl shadow-lg p-6">
+            <header className="flex items-center justify-between mb-6">
+              <div className="font-bold text-lg font-mono">LADDERBATA</div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={handleStart}
+                  variant="outline"
+                  className="font-mono"
+                >
+                  Reset Timer
+                </Button>
+              </div>
+            </header>
 
-        <h1 className={`text-5xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
-          {getPhaseText()}
-        </h1>
+            <h1 className={`text-5xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
+              {getPhaseText()}
+            </h1>
 
-        <div className="text-center space-y-2 mb-4">
-          <div className="font-bold font-mono">
-            ROUND: {state.phase === 'idle' ? '–' : state.currentRound} OF {state.targetRounds || '–'}
-          </div>
-          <div className="font-bold font-mono">
-            CURRENT ROUND: {state.phase === 'idle' ? '–' : state.currentRound} MINUTES OF WORK
-          </div>
-          <div className="text-muted-foreground font-bold font-mono">
-            NEXT ROUND: {state.phase === 'idle' || state.currentRound >= state.targetRounds ? '–' : state.currentRound + 1} MINUTES OF WORK
-          </div>
-          <div className="text-muted-foreground font-mono text-6xl mt-2 tabular-nums">
-            {mmss(state.secondsLeft)}
-          </div>
-        </div>
+            <div className="text-center space-y-2 mb-4">
+              <div className="font-bold font-mono">
+                ROUND: {state.currentRound} OF {state.targetRounds}
+              </div>
+              <div className="font-bold font-mono">
+                CURRENT ROUND: {state.currentRound} MINUTES OF WORK
+              </div>
+              <div className="text-muted-foreground font-bold font-mono">
+                NEXT ROUND: {state.currentRound >= state.targetRounds ? '–' : state.currentRound + 1} MINUTES OF WORK
+              </div>
+              <div className="text-muted-foreground font-mono text-6xl mt-2 tabular-nums">
+                {mmss(state.secondsLeft)}
+              </div>
+            </div>
 
-        <div className="text-center text-xl font-mono">
-          TOTAL ELAPSED: <span className="text-2xl">{hms(state.elapsedSeconds)}</span>
-        </div>
-      </main>
+            <div className="text-center text-xl font-mono">
+              TOTAL ELAPSED: <span className="text-2xl">{hms(state.elapsedSeconds)}</span>
+            </div>
+          </main>
 
-      {queue.length > 0 && (
-        <section className="max-w-3xl mx-auto mt-6">
-          <div className="bg-card border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50">
-                  <th className="text-left p-3 font-bold">Round</th>
-                  <th className="text-left p-3 font-bold">Work Start</th>
-                  <th className="text-left p-3 font-bold">Rest Start</th>
-                  <th className="text-left p-3 font-bold">Work Minutes</th>
-                  <th className="text-left p-3 font-bold">Elapsed Time on Completion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {queue.map((item, index) => (
-                  <tr 
-                    key={item.round} 
-                    className={index === 0 ? 'bg-green-50' : ''}
-                  >
-                    <td className="p-3 border-b border-border/50">{item.round}</td>
-                    <td className="p-3 border-b border-border/50">{item.workStart}</td>
-                    <td className="p-3 border-b border-border/50">{item.restStart}</td>
-                    <td className="p-3 border-b border-border/50">{item.workMinutes}</td>
-                    <td className="p-3 border-b border-border/50">{item.completionTime}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          {queue.length > 0 && (
+            <section className="max-w-3xl mx-auto mt-6">
+              <div className="bg-card border rounded-xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left p-3 font-bold">Round</th>
+                      <th className="text-left p-3 font-bold">Work Start</th>
+                      <th className="text-left p-3 font-bold">Rest Start</th>
+                      <th className="text-left p-3 font-bold">Work Minutes</th>
+                      <th className="text-left p-3 font-bold">Elapsed Time on Completion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {queue.map((item, index) => (
+                      <tr 
+                        key={item.round} 
+                        className={index === 0 ? 'bg-green-50' : ''}
+                      >
+                        <td className="p-3 border-b border-border/50">{item.round}</td>
+                        <td className="p-3 border-b border-border/50">{item.workStart}</td>
+                        <td className="p-3 border-b border-border/50">{item.restStart}</td>
+                        <td className="p-3 border-b border-border/50">{item.workMinutes}</td>
+                        <td className="p-3 border-b border-border/50">{item.completionTime}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   )

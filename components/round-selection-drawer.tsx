@@ -27,7 +27,7 @@ export function RoundSelectionDrawer({
   onStart 
 }: RoundSelectionDrawerProps) {
   const [rounds, setRounds] = React.useState(currentRounds)
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(true)
 
   function onClick(adjustment: number) {
     const newRounds = Math.max(1, Math.min(20, rounds + adjustment))
@@ -54,7 +54,7 @@ export function RoundSelectionDrawer({
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button variant="outline" className="font-mono">
-          {currentRounds} Work rounds
+          Reset Timer
         </Button>
       </DrawerTrigger>
       <DrawerContent>
