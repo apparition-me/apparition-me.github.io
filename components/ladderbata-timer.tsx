@@ -133,7 +133,6 @@ export function LadderbataTimer() {
   }
 
   const buildQueue = (total: number) => {
-    console.log('buildQueue called with total:', total)
     const newQueue: QueueItem[] = []
     let cumulativeTime = 0
     
@@ -154,7 +153,6 @@ export function LadderbataTimer() {
       cumulativeTime = completionTime
     }
     
-    console.log('buildQueue created newQueue with length:', newQueue.length)
     setQueue(newQueue)
   }
 
@@ -219,14 +217,6 @@ export function LadderbataTimer() {
         const elapsedInPhase = newElapsed - prev.phaseStartElapsed
         const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
         
-        console.log('Timer tick:', {
-          phase: prev.phase,
-          currentRound: prev.currentRound,
-          newElapsed,
-          elapsedInPhase,
-          newSecondsLeft,
-          phaseDuration
-        })
 
         if (newSecondsLeft === 0) {
           if (prev.phase === 'work') {
@@ -280,7 +270,6 @@ export function LadderbataTimer() {
   }
 
   const handleRoundsChange = (rounds: number) => {
-    console.log('handleRoundsChange called with rounds:', rounds)
     setState(prev => ({ ...prev, targetRounds: rounds }))
   }
 
