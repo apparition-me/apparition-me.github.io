@@ -40,7 +40,7 @@ interface WorkoutTableRow {
 
 export function LadderbataTimer() {
   const [state, setState] = React.useState<TimerState>({
-    targetRounds: 8,
+    targetRounds: 3,
     currentRound: 0,
     phase: 'idle',
     secondsLeft: 0,
