@@ -1,8 +1,10 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { RoundSelectionDrawer } from "@/components/round-selection-drawer"
+import { WorkoutTable } from "@/components/workout-table"
 
 interface TimerState {
   targetRounds: number
@@ -21,6 +23,18 @@ interface QueueItem {
   completionTime: number
 }
 
+interface WorkoutTableRow {
+  id: string
+  description: string
+  quantity: number
+  price: number
+  total: number
+  workStart: number
+  restStart: number
+  workMinutes: number
+  elapsedTimeOnCompletion: number
+}
+
 export function LadderbataTimer() {
   const [state, setState] = React.useState<TimerState>({
     targetRounds: 8,
@@ -32,6 +46,7 @@ export function LadderbataTimer() {
   })
 
   const [queue, setQueue] = React.useState<QueueItem[]>([])
+  const [tableData, setTableData] = React.useState<WorkoutTableRow[]>([])
   const [tick, setTick] = React.useState<NodeJS.Timeout | null>(null)
 
   const mmss = (s: number) => {
@@ -52,6 +67,20 @@ export function LadderbataTimer() {
       clearInterval(tick)
       setTick(null)
     }
+  }
+
+  const transformQueueToTableData = (queueItems: QueueItem[]): WorkoutTableRow[] => {
+    return queueItems.map((item) => ({
+      id: `round-${item.round}`,
+      description: `Round ${item.round} Workout`,
+      quantity: item.workMinutes,
+      price: item.workMinutes * 10, // Example pricing: $10 per minute
+      total: item.workMinutes * 10,
+      workStart: item.workStart,
+      restStart: item.restStart,
+      workMinutes: item.workMinutes,
+      elapsedTimeOnCompletion: item.completionTime,
+    }))
   }
 
   const buildQueue = (total: number) => {
@@ -76,6 +105,7 @@ export function LadderbataTimer() {
     }
     
     setQueue(newQueue)
+    setTableData(transformQueueToTableData(newQueue))
   }
 
   const popTopRow = () => {
@@ -103,6 +133,11 @@ export function LadderbataTimer() {
       secondsLeft: workMinutes * 60,
       phaseStartElapsed: prev.elapsedSeconds,
     }))
+    
+    // Trigger Sonner notification when work round starts
+    toast.success('Work Round Started', {
+      description: `Round ${state.currentRound} - ${workMinutes} minutes of work`,
+    })
   }
 
   const beginRest = () => {
@@ -264,35 +299,12 @@ export function LadderbataTimer() {
             </div>
           </main>
 
-          {queue.length > 0 && (
+          {tableData.length > 0 && (
             <section className="max-w-3xl mx-auto mt-6">
-              <div className="bg-card border rounded-xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left p-3 font-bold">Round</th>
-                      <th className="text-left p-3 font-bold">Work Start</th>
-                      <th className="text-left p-3 font-bold">Rest Start</th>
-                      <th className="text-left p-3 font-bold">Work Minutes</th>
-                      <th className="text-left p-3 font-bold">Elapsed Time on Completion</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {queue.map((item, index) => (
-                      <tr 
-                        key={item.round} 
-                        className={index === 0 ? 'bg-green-50' : ''}
-                      >
-                        <td className="p-3 border-b border-border/50">{item.round}</td>
-                        <td className="p-3 border-b border-border/50">{item.workStart}</td>
-                        <td className="p-3 border-b border-border/50">{item.restStart}</td>
-                        <td className="p-3 border-b border-border/50">{item.workMinutes}</td>
-                        <td className="p-3 border-b border-border/50">{item.completionTime}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <WorkoutTable 
+                data={tableData} 
+                currentRound={state.currentRound}
+              />
             </section>
           )}
         </>
