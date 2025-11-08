@@ -41,11 +41,7 @@ export function WorkoutTable({ data, currentRound }: WorkoutTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="font-bold">DESCRIPTION</TableHead>
-              <TableHead className="font-bold">QUANTITY</TableHead>
-              <TableHead className="font-bold">PRICE</TableHead>
-              <TableHead className="font-bold">TOTAL</TableHead>
-              {/* Additional columns from original table */}
+              <TableHead className="font-bold">ROUND</TableHead>
               <TableHead className="font-bold">WORK START</TableHead>
               <TableHead className="font-bold">REST START</TableHead>
               <TableHead className="font-bold">WORK MINUTES</TableHead>
@@ -58,14 +54,11 @@ export function WorkoutTable({ data, currentRound }: WorkoutTableProps) {
                 key={item.id} 
                 className={index === 0 && currentRound ? 'bg-green-50' : ''}
               >
-                <TableCell className="border-b border-border/50">{item.description.toUpperCase()}</TableCell>
-                <TableCell className="border-b border-border/50">{item.quantity}</TableCell>
-                <TableCell className="border-b border-border/50">{item.price}</TableCell>
-                <TableCell className="border-b border-border/50">{item.total}</TableCell>
-                <TableCell className="border-b border-border/50">{item.workStart ?? '-'}</TableCell>
-                <TableCell className="border-b border-border/50">{item.restStart ?? '-'}</TableCell>
-                <TableCell className="border-b border-border/50">{item.workMinutes ?? '-'}</TableCell>
-                <TableCell className="border-b border-border/50">{item.elapsedTimeOnCompletion ?? '-'}</TableCell>
+                <TableCell className="border-b border-border/50">{item.workMinutes}</TableCell>
+                <TableCell className="border-b border-border/50">{item.workStart}</TableCell>
+                <TableCell className="border-b border-border/50">{item.restStart}</TableCell>
+                <TableCell className="border-b border-border/50">{item.workMinutes}</TableCell>
+                <TableCell className="border-b border-border/50">{item.elapsedTimeOnCompletion}</TableCell>
               </TableRow>
             ))}
           </TableBody>
