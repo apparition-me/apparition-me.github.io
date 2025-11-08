@@ -50,6 +50,7 @@ export function LadderbataTimer() {
 
   const [queue, setQueue] = React.useState<QueueItem[]>([])
   const [tick, setTick] = React.useState<NodeJS.Timeout | null>(null)
+  const [countdownTick, setCountdownTick] = React.useState<NodeJS.Timeout | null>(null)
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
   const [currentCarouselIndex, setCurrentCarouselIndex] = React.useState(0)
   const [countdownSeconds, setCountdownSeconds] = React.useState(10)
@@ -71,6 +72,10 @@ export function LadderbataTimer() {
     if (tick) {
       clearInterval(tick)
       setTick(null)
+    }
+    if (countdownTick) {
+      clearInterval(countdownTick)
+      setCountdownTick(null)
     }
   }
 
@@ -183,11 +188,11 @@ export function LadderbataTimer() {
     
     // Start countdown timer
     clearTimer()
-    const countdownTick = setInterval(() => {
+    const countdownInterval = setInterval(() => {
       setCountdownSeconds(prev => {
         if (prev <= 1) {
-          clearInterval(countdownTick)
-          setTick(null)
+          clearInterval(countdownInterval)
+          setCountdownTick(null)
           // Start work phase immediately after countdown
           setState(prevState => ({
             ...prevState,
@@ -271,7 +276,7 @@ export function LadderbataTimer() {
       })
     }, 1000)
     
-    setTick(countdownTick)
+    setCountdownTick(countdownInterval)
   }
 
   const handleRoundsChange = (rounds: number) => {
@@ -340,7 +345,7 @@ export function LadderbataTimer() {
 
       {/* Countdown Dialog */}
       <Dialog open={state.phase === 'countdown'}>
-        <DialogContent className="bg-white border-none max-w-md [&>button]:hidden">
+        <DialogContent className="bg-white border-none max-w-md [&>button]:hidden shadow-none">
           <div className="flex flex-col items-center justify-center py-8">
             <h1 className="text-9xl font-bold text-black font-mono mb-6">
               {countdownSeconds}
