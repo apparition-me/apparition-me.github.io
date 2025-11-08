@@ -124,15 +124,13 @@ export function RoundSelectionDrawer({
                 </Button>
               </DrawerClose>
             ) : (
-              <DrawerClose asChild>
-                <Button 
-                  onClick={onReset} 
-                  variant="destructive" 
-                  className="font-mono"
-                >
-                  Reset Timer
-                </Button>
-              </DrawerClose>
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="destructive" 
+                className="font-mono"
+              >
+                Reset Timer
+              </Button>
             )}
           </DrawerFooter>
         </div>
