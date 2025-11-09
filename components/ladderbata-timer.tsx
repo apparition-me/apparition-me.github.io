@@ -387,7 +387,7 @@ export function LadderbataTimer() {
             <div className="flex justify-center">
 
               <div className="flex items-center gap-2 px-6 py-4 font-mono bg-black">
-                <span className="text-lg font-bold uppercase text-white">Clock Time:</span>
+
                 <span className="text-lg font-bold tabular-nums text-white">{hmsWithMilliseconds(state.elapsedMilliseconds)}</span>
               </div>
             

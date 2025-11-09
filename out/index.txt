@@ -1,5 +1,5 @@
 1:HL["/_next/static/css/b4c468df67837a9f.css","style",{"crossOrigin":""}]
-0:["YmjcZMixC_xbD6wfaFNrB",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/b4c468df67837a9f.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
+0:["LkpWFgvWFj2970u3fI1gF",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/b4c468df67837a9f.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
 4:I[6954,[],""]
 5:I[7264,[],""]
 7:I[8417,["727","static/chunks/727-915aee62a12ee871.js","931","static/chunks/app/page-3e3d0a01201a20c7.js"],"LadderbataTimer"]
