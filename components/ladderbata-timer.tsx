@@ -377,18 +377,13 @@ export function LadderbataTimer() {
                 {mmss(state.secondsLeft)}
               </div>
 
-            <div className="text-center space-y-2 my-4">
-              <div className="font-bold font-mono text-4xl">
-                ROUND: {state.currentRound} OF {state.targetRounds}
-              </div>
-             
-            </div>
 
-            <div className="flex justify-center">
 
-              <div className="flex items-center gap-2 px-6 py-4 font-mono bg-black">
+            <div className="flex justify-center pt-4">
 
-                <span className="text-lg font-bold tabular-nums text-white">{hmsWithMilliseconds(state.elapsedMilliseconds)}</span>
+              <div className="flex items-center gap-2 p-4 font-mono bg-gray-500">
+
+                <span className="text-3xl font-bold tabular-nums text-white">{hmsWithMilliseconds(state.elapsedMilliseconds)}</span>
               </div>
             
             
