@@ -1,8 +1,8 @@
 1:HL["/_next/static/css/b4c468df67837a9f.css","style",{"crossOrigin":""}]
-0:["LkpWFgvWFj2970u3fI1gF",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/b4c468df67837a9f.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
+0:["QhboB-o2zyQggviwDYvu_",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/b4c468df67837a9f.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
 4:I[6954,[],""]
 5:I[7264,[],""]
-7:I[8417,["727","static/chunks/727-915aee62a12ee871.js","931","static/chunks/app/page-3e3d0a01201a20c7.js"],"LadderbataTimer"]
+7:I[8417,["727","static/chunks/727-915aee62a12ee871.js","931","static/chunks/app/page-a855ad2525bcc184.js"],"LadderbataTimer"]
 2:[null,["$","html",null,{"lang":"en","children":["$","body",null,{"children":["$","$L4",null,{"parallelRouterKey":"children","segmentPath":["children"],"loading":"$undefined","loadingStyles":"$undefined","loadingScripts":"$undefined","hasLoading":false,"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":["$","div",null,{"className":"min-h-screen flex items-center justify-center","children":["$","div",null,{"className":"text-center","children":[["$","h1",null,{"className":"text-4xl font-bold mb-4","children":"404 - Page Not Found"}],["$","p",null,{"className":"text-muted-foreground","children":"The page you're looking for doesn't exist."}]]}]}],"notFoundStyles":[],"childProp":{"current":["$L6",["$","$L7",null,{}],null],"segment":"__PAGE__"},"styles":null}]}]}],null]
 3:[["$","meta","0",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","1",{"charSet":"utf-8"}],["$","title","2",{"children":"LADDERBATA - Apparition Timer"}],["$","meta","3",{"name":"description","content":"Progressive workout timer with escalating work periods"}]]
 6:null
