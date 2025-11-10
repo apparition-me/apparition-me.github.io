@@ -255,6 +255,11 @@ export function LadderbataTimer({
   // COMPLETELY SEPARATE MAIN TIMER FUNCTION
   const startMainTimer = () => {
     const startTime = Date.now() - pausedTime
+    console.log('🚀 STARTING MAIN TIMER:', {
+      startTime,
+      pausedTime,
+      adjustedStartTime: startTime
+    })
     setState(prev => ({
       ...prev,
       phase: 'work',
@@ -347,20 +352,46 @@ export function LadderbataTimer({
   }
 
   const togglePause = () => {
+    console.log('🔄 TOGGLE PAUSE CALLED')
     setState(prev => {
       const newPaused = !prev.paused
+      console.log(`📊 Current state:`, {
+        paused: prev.paused,
+        newPaused,
+        elapsedMs: prev.elapsedMilliseconds,
+        elapsedSec: prev.elapsedSeconds,
+        secondsLeft: prev.secondsLeft,
+        currentRound: prev.currentRound,
+        phase: prev.phase
+      })
+      
       if (newPaused) {
+        console.log('⏸️ PAUSING - storing elapsed time:', prev.elapsedMilliseconds)
         // Pausing - store current elapsed time
         setPausedTime(prev.elapsedMilliseconds)
         // Clear the existing timer
         if (tick) {
+          console.log('🛑 Clearing existing timer interval')
           clearInterval(tick)
           setTick(null)
         }
       } else {
+        console.log('▶️ RESUMING')
+        // Clear any existing timer first to prevent multiple intervals
+        if (tick) {
+          console.log('🛑 Clearing existing timer before resume')
+          clearInterval(tick)
+          setTick(null)
+        }
+        
         // Resuming - restart timer from where we left off
         const resumeTime = Date.now()
-        const pausedDuration = pausedTime
+        const pausedDuration = prev.elapsedMilliseconds // Use current state, not stale closure
+        console.log(`📈 Resume data:`, {
+          resumeTime,
+          pausedDuration,
+          currentElapsedMs: prev.elapsedMilliseconds
+        })
         
         const workTick = setInterval(() => {
           setState(current => {
@@ -372,6 +403,21 @@ export function LadderbataTimer({
             const phaseDuration = current.phase === 'work' ? current.currentRound * 60 : 60
             const elapsedInPhase = newElapsed - current.phaseStartElapsed
             const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
+            
+            // Debug logging every 5 seconds to avoid spam
+            if (newElapsed % 5 === 0 && newElapsed !== current.elapsedSeconds) {
+              console.log('⏱️ Timer tick:', {
+                currentTime,
+                pausedDuration,
+                resumeTime,
+                totalElapsedMs,
+                newElapsed,
+                phaseDuration,
+                elapsedInPhase,
+                newSecondsLeft,
+                phaseStartElapsed: current.phaseStartElapsed
+              })
+            }
             
             if (newSecondsLeft === 0) {
               if (current.phase === 'work') {
@@ -532,54 +578,6 @@ export function LadderbataTimer({
           <main className="max-w-3xl mx-auto bg-card  rounded-2xl p-0">
 
 
-
-          {state.targetRounds > 0 && (
-            <section className="max-w-3xl mx-auto mb-6">
-              
-              <Carousel 
-                setApi={setCarouselApi}
-                opts={{
-                  align: "center",
-                  loop: false,
-                  watchDrag: false,
-                }}
-                className="w-full"
-              >
-                <CarouselContent className="justify-center ml-0">
-                  {generateCarouselData(state.targetRounds, state.currentRound).map((item, index) => {
-                    const isActiveCard = index === 0
-                    const textClass = isActiveCard 
-                      ? (state.phase === 'rest' ? 'text-red-500' : 'text-green-500')
-                      : 'text-muted-foreground'
-                    const mutedTextClass = isActiveCard 
-                      ? (state.phase === 'rest' ? 'text-red-500' : 'text-green-500')
-                      : 'text-muted-foreground'
-                    const underlineClass = isActiveCard 
-                      ? (state.phase === 'rest' ? 'border-b-[5px] border-red-500' : 'border-b-[5px] border-green-500')
-                      : ''
-                    
-                    const remainingItems = generateCarouselData(state.targetRounds, state.currentRound).length
-                    const basisClass = remainingItems === 1 ? 'basis-1/3' : remainingItems === 2 ? 'basis-1/2' : remainingItems === 3 ? 'basis-1/3' : remainingItems === 4 ? 'basis-1/4' : 'basis-1/5'
-                    
-                    return (
-                      <CarouselItem key={item.round} className={`${basisClass} flex justify-center`}>
-                        <Card className="p-4 aspect-square rounded-full flex flex-col items-center justify-center bg-transparent">
-                          <CardTitle className={`text-center font-mono text-xl uppercase ${mutedTextClass} ${underlineClass} pb-2`}>
-                              ROUND
-                              <h1 className={`text-center font-mono text-4xl ${mutedTextClass}`}>{item.round}</h1>
-                              
-                            </CardTitle>
-                        </Card>
-
-                      </CarouselItem>
-                    )
-                  })}
-                </CarouselContent>
-              </Carousel>
-            </section>
-          )}
-
-
             {/* Visual Clock Pie Chart */}
             <div className="flex justify-center mb-6">
               <div className={`relative ${chartSize.w} ${chartSize.h} ${chartSize.smW || ''} ${chartSize.smH || ''}`}>
@@ -619,8 +617,13 @@ export function LadderbataTimer({
                 />
                 {/* Timer text overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className={`font-mono font-bold text-6xl tabular-nums text-center ${getPhaseClass()}`}>
-                    {mmss(state.secondsLeft)}
+                  <div className="flex flex-col items-center justify-center">
+                    <div className={`font-mono font-bold text-6xl tabular-nums text-center ${getPhaseClass()}`}>
+                      {mmss(state.secondsLeft)}
+                    </div>
+                    <div className={`font-mono font-bold text-2xl text-center ${getPhaseClass()} mt-2`}>
+                      {state.currentRound} / {state.targetRounds}
+                    </div>
                   </div>
                 </div>
               </div>
