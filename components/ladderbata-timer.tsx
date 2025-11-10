@@ -8,16 +8,35 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
-import { TimerReset } from "lucide-react"
+import { TimerReset, Play, Pause, CheckCircle } from "lucide-react"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import { Doughnut } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+
+interface LadderbataTimerProps {
+  chartSize?: {
+    w: string
+    h: string
+    smW?: string
+    smH?: string
+  }
+  cutout?: string
+}
 
 interface TimerState {
   targetRounds: number
   currentRound: number
-  phase: 'idle' | 'countdown' | 'work' | 'rest' | 'done'
+  phase: 'idle' | 'countdown' | 'work' | 'rest' | 'done' | 'timer_completion'
   secondsLeft: number
   elapsedSeconds: number
   phaseStartElapsed: number
   elapsedMilliseconds: number
+  paused: boolean
 }
 
 interface QueueItem {
@@ -40,7 +59,10 @@ interface WorkoutTableRow {
   elapsedTimeOnCompletion: number
 }
 
-export function LadderbataTimer() {
+export function LadderbataTimer({
+  chartSize = { w: 'w-80', h: 'h-80', smW: 'sm:w-96', smH: 'sm:h-96' },
+  cutout = '80%'
+}: LadderbataTimerProps = {}) {
   const [state, setState] = React.useState<TimerState>({
     targetRounds: 3,
     currentRound: 0,
@@ -49,6 +71,7 @@ export function LadderbataTimer() {
     elapsedSeconds: 0,
     phaseStartElapsed: 0,
     elapsedMilliseconds: 0,
+    paused: false,
   })
 
   const [queue, setQueue] = React.useState<QueueItem[]>([])
@@ -57,6 +80,12 @@ export function LadderbataTimer() {
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
   const [currentCarouselIndex, setCurrentCarouselIndex] = React.useState(0)
   const [countdownSeconds, setCountdownSeconds] = React.useState(10)
+  const [pausedTime, setPausedTime] = React.useState(0)
+
+  // Register Chart.js components
+  React.useEffect(() => {
+    ChartJS.register(ArcElement, Tooltip, Legend)
+  }, [])
 
   const mmss = (s: number) => {
     const m = Math.floor(s / 60).toString().padStart(2, '0')
@@ -99,7 +128,8 @@ export function LadderbataTimer() {
       const workStart = cumulativeTime
       const workMinutes = r
       const restStart = cumulativeTime + workMinutes
-      const completionTime = restStart + 1 // 1 min rest
+      // Last round has no rest period
+      const completionTime = r === rounds ? restStart : restStart + 1
       
       tableRows.push({
         round: r,
@@ -124,7 +154,8 @@ export function LadderbataTimer() {
       const workStart = cumulativeTime
       const workMinutes = r
       const restStart = cumulativeTime + workMinutes
-      const completionTime = restStart + 1 // 1 min rest
+      // Last round has no rest period
+      const completionTime = r === rounds ? restStart : restStart + 1
       
       // Only include current and future rounds
       if (r >= currentRound) {
@@ -151,7 +182,8 @@ export function LadderbataTimer() {
       const workStart = cumulativeTime
       const workMinutes = r
       const restStart = cumulativeTime + workMinutes
-      const completionTime = restStart + 1 // 1 min rest
+      // Last round has no rest period
+      const completionTime = r === total ? restStart : restStart + 1
       
       newQueue.push({
         round: r,
@@ -173,15 +205,23 @@ export function LadderbataTimer() {
   }
 
 
+  // Calculate total work time across all completed rounds
+  const calculateTotalWorkTime = (rounds: number) => {
+    let totalWorkSeconds = 0
+    for (let r = 1; r <= rounds; r++) {
+      totalWorkSeconds += r * 60 // Each round is r minutes of work
+    }
+    return totalWorkSeconds
+  }
+
   const complete = () => {
     clearTimer()
     setState(prev => ({
       ...prev,
-      phase: 'done',
+      phase: 'timer_completion',
       secondsLeft: 0,
     }))
     setQueue([])
-    // Don't clear tableData - keep table visible after completion
   }
 
   // COMPLETELY ISOLATED COUNTDOWN TIMER - NO INTERFERENCE WITH MAIN TIMER
@@ -214,17 +254,20 @@ export function LadderbataTimer() {
 
   // COMPLETELY SEPARATE MAIN TIMER FUNCTION
   const startMainTimer = () => {
-    const startTime = Date.now()
+    const startTime = Date.now() - pausedTime
     setState(prev => ({
       ...prev,
       phase: 'work',
       secondsLeft: prev.currentRound * 60,
       phaseStartElapsed: prev.elapsedSeconds,
-      elapsedMilliseconds: 0,
+      elapsedMilliseconds: pausedTime,
+      paused: false,
     }))
     
     const workTick = setInterval(() => {
       setState(prev => {
+        if (prev.paused) return prev
+        
         const currentTime = Date.now()
         const totalElapsedMs = currentTime - startTime
         const newElapsed = Math.floor(totalElapsedMs / 1000)
@@ -235,7 +278,17 @@ export function LadderbataTimer() {
 
         if (newSecondsLeft === 0) {
           if (prev.phase === 'work') {
-            // Transition to rest
+            // Check if this is the final round - if so, complete directly
+            if (prev.currentRound >= prev.targetRounds) {
+              complete()
+              return {
+                ...prev,
+                elapsedSeconds: newElapsed,
+                phase: 'done',
+                secondsLeft: 0,
+              }
+            }
+            // Transition to rest for non-final rounds
             return {
               ...prev,
               elapsedSeconds: newElapsed,
@@ -293,12 +346,97 @@ export function LadderbataTimer() {
     }
   }
 
+  const togglePause = () => {
+    setState(prev => {
+      const newPaused = !prev.paused
+      if (newPaused) {
+        // Pausing - store current elapsed time
+        setPausedTime(prev.elapsedMilliseconds)
+        // Clear the existing timer
+        if (tick) {
+          clearInterval(tick)
+          setTick(null)
+        }
+      } else {
+        // Resuming - restart timer from where we left off
+        const resumeTime = Date.now()
+        const pausedDuration = pausedTime
+        
+        const workTick = setInterval(() => {
+          setState(current => {
+            if (current.paused) return current
+            
+            const currentTime = Date.now()
+            const totalElapsedMs = pausedDuration + (currentTime - resumeTime)
+            const newElapsed = Math.floor(totalElapsedMs / 1000)
+            const phaseDuration = current.phase === 'work' ? current.currentRound * 60 : 60
+            const elapsedInPhase = newElapsed - current.phaseStartElapsed
+            const newSecondsLeft = Math.max(0, phaseDuration - elapsedInPhase)
+            
+            if (newSecondsLeft === 0) {
+              if (current.phase === 'work') {
+                // Check if this is the final round - if so, complete directly
+                if (current.currentRound >= current.targetRounds) {
+                  complete()
+                  return {
+                    ...current,
+                    elapsedSeconds: newElapsed,
+                    phase: 'done',
+                    secondsLeft: 0,
+                  }
+                }
+                // Transition to rest for non-final rounds
+                return {
+                  ...current,
+                  elapsedSeconds: newElapsed,
+                  phase: 'rest',
+                  secondsLeft: 60,
+                  phaseStartElapsed: newElapsed,
+                }
+              } else if (current.phase === 'rest') {
+                if (current.currentRound >= current.targetRounds) {
+                  complete()
+                  return {
+                    ...current,
+                    elapsedSeconds: newElapsed,
+                    phase: 'done',
+                    secondsLeft: 0,
+                  }
+                } else {
+                  const nextRound = current.currentRound + 1
+                  return {
+                    ...current,
+                    elapsedSeconds: newElapsed,
+                    currentRound: nextRound,
+                    phase: 'work',
+                    secondsLeft: nextRound * 60,
+                    phaseStartElapsed: newElapsed,
+                  }
+                }
+              }
+            }
+
+            return {
+              ...current,
+              elapsedSeconds: newElapsed,
+              secondsLeft: newSecondsLeft,
+              elapsedMilliseconds: totalElapsedMs,
+            }
+          })
+        }, 100)
+        setTick(workTick)
+      }
+      return { ...prev, paused: newPaused }
+    })
+  }
+
   const getPhaseText = () => {
     switch (state.phase) {
       case 'idle': return 'READY'
       case 'work': return 'WORK'
       case 'rest': return 'REST'
       case 'done': return 'COMPLETED'
+      case 'timer_completion': return 'WORKOUT COMPLETE'
       default: return 'READY'
     }
   }
@@ -308,6 +446,7 @@ export function LadderbataTimer() {
       case 'work': return 'text-green-600'
       case 'rest': return 'text-red-500'
       case 'done': return 'text-gray-900'
+      case 'timer_completion': return 'text-green-600'
       default: return 'text-green-600'
     }
   }
@@ -359,44 +498,44 @@ export function LadderbataTimer() {
         </DialogContent>
       </Dialog>
       
-      {/* Timer interface - only show when NOT in idle/done/countdown states */}
-      {state.phase !== 'idle' && state.phase !== 'done' && state.phase !== 'countdown' && (
+      {/* Timer Completion State */}
+      {state.phase === 'timer_completion' && (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Empty className="max-w-md">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CheckCircle className="size-16 text-black" />
+              </EmptyMedia>
+              <EmptyTitle className="text-2xl font-mono font-bold my-4">
+                {state.targetRounds} ROUNDS COMPLETE
+              </EmptyTitle>
+              <EmptyDescription className="text-2xl font-mono font-bold">
+                Total Work: {hms(calculateTotalWorkTime(state.targetRounds))} minutes
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button 
+                onClick={() => window.location.reload()}
+                className="font-mono font-bold"
+              >
+                <TimerReset className="mr-2 h-4 w-4" />
+                RESET TIMER
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </div>
+      )}
+
+      {/* Timer interface - only show when NOT in idle/done/countdown/timer_completion states */}
+      {state.phase !== 'idle' && state.phase !== 'done' && state.phase !== 'countdown' && state.phase !== 'timer_completion' && (
         <>
           <main className="max-w-3xl mx-auto bg-card  rounded-2xl p-0">
-            <header 
-              className="flex items-center justify-center mb-6 w-full py-3 rounded-lg"
-              style={getProgressStyle()}
-            >
-              <div className="font-bold text-lg font-mono text-white bg-black p-2">LADDERBATA</div>
-            </header>
-
-            <h1 className={` text-8xl font-bold text-center mb-2 font-mono ${getPhaseClass()}`}>
-              {getPhaseText()}
-            </h1>
-             <div className={`font-mono font-bold text-6xl sm:text-8xl lg:text-9xl mt-2 tabular-nums text-center ${getPhaseClass()}`}>
-                {mmss(state.secondsLeft)}
-              </div>
 
 
-
-            <div className="flex justify-center pt-4">
-
-              <div className="flex items-center gap-2 p-4 font-mono bg-gray-500">
-
-                <span className="text-3xl font-bold tabular-nums text-white">{hmsWithMilliseconds(state.elapsedMilliseconds)}</span>
-              </div>
-            
-            
-            
-            
-            </div>
-            <div className="text-center text-muted-foreground font-bold font-mono mt-4 text-lg">
-                NEXT ROUND: {state.currentRound >= state.targetRounds ? '–' : state.currentRound + 1} MINUTES OF WORK
-              </div>
-          </main>
 
           {state.targetRounds > 0 && (
-            <section className="max-w-3xl mx-auto mt-6">
+            <section className="max-w-3xl mx-auto mb-6">
+              
               <Carousel 
                 setApi={setCarouselApi}
                 opts={{
@@ -406,35 +545,32 @@ export function LadderbataTimer() {
                 }}
                 className="w-full"
               >
-                <CarouselContent>
+                <CarouselContent className="justify-center ml-0">
                   {generateCarouselData(state.targetRounds, state.currentRound).map((item, index) => {
                     const isActiveCard = index === 0
-                    const cardBgClass = isActiveCard 
-                      ? (state.phase === 'rest' ? 'bg-red-500' : 'bg-green-500')
+                    const textClass = isActiveCard 
+                      ? (state.phase === 'rest' ? 'text-red-500' : 'text-green-500')
+                      : 'text-muted-foreground'
+                    const mutedTextClass = isActiveCard 
+                      ? (state.phase === 'rest' ? 'text-red-500' : 'text-green-500')
+                      : 'text-muted-foreground'
+                    const underlineClass = isActiveCard 
+                      ? (state.phase === 'rest' ? 'border-b-[5px] border-red-500' : 'border-b-[5px] border-green-500')
                       : ''
-                    const textClass = isActiveCard ? 'text-white' : ''
-                    const mutedTextClass = isActiveCard ? 'text-white' : 'text-muted-foreground'
+                    
+                    const remainingItems = generateCarouselData(state.targetRounds, state.currentRound).length
+                    const basisClass = remainingItems === 1 ? 'basis-1/3' : remainingItems === 2 ? 'basis-1/2' : remainingItems === 3 ? 'basis-1/3' : remainingItems === 4 ? 'basis-1/4' : 'basis-1/5'
                     
                     return (
-                      <CarouselItem key={item.round} className="md:basis-1/2 lg:basis-1/3">
-                        <Card className={cardBgClass}>
-                          <CardHeader>
-                            
-                            <CardTitle className={`text-center font-mono text-4xl uppercase ${textClass}`}>
+                      <CarouselItem key={item.round} className={`${basisClass} flex justify-center`}>
+                        <Card className="p-4 aspect-square rounded-full flex flex-col items-center justify-center bg-transparent">
+                          <CardTitle className={`text-center font-mono text-xl uppercase ${mutedTextClass} ${underlineClass} pb-2`}>
                               ROUND
-                              <h1 className={`text-center font-mono text-8xl ${textClass}`}>{item.round}</h1>
+                              <h1 className={`text-center font-mono text-4xl ${mutedTextClass}`}>{item.round}</h1>
+                              
                             </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2 font-mono">
-                            <div className="text-center">
-                              <div className={`font-bold ${textClass}`}>WORK: {mmss(item.workMinutes * 60)}</div>
-                              <div className={`font-bold ${textClass}`}>REST: {mmss(60)}</div>
-                              <div className={`font-bold text-sm uppercase tracking-tight mt-4 ${mutedTextClass}`}>
-                                CLOCK TIME: {mmss(item.elapsedTimeOnCompletion * 60)}
-                              </div>
-                            </div>
-                          </CardContent>
                         </Card>
+
                       </CarouselItem>
                     )
                   })}
@@ -443,15 +579,87 @@ export function LadderbataTimer() {
             </section>
           )}
 
-          {/* Reset Timer Button */}
-          <div className="flex justify-center mt-6">
+
+            {/* Visual Clock Pie Chart */}
+            <div className="flex justify-center mb-6">
+              <div className={`relative ${chartSize.w} ${chartSize.h} ${chartSize.smW || ''} ${chartSize.smH || ''}`}>
+                <Doughnut
+                  data={{
+                    datasets: [{
+                      data: [
+                        state.secondsLeft,
+                        (state.phase === 'work' ? state.currentRound * 60 : 60) - state.secondsLeft
+                      ],
+                      backgroundColor: [
+                        state.phase === 'work' ? '#22c55e' : '#ef4444',
+                        '#e5e7eb'
+                      ],
+                      borderWidth: 0
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: cutout,
+                    plugins: {
+                      legend: {
+                        display: false
+                      },
+                      tooltip: {
+                        enabled: false
+                      }
+                    },
+                    rotation: -90,
+                    circumference: 360,
+                    animation: {
+                      animateRotate: false,
+                      animateScale: false
+                    }
+                  }}
+                />
+                {/* Timer text overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`font-mono font-bold text-6xl tabular-nums text-center ${getPhaseClass()}`}>
+                    {mmss(state.secondsLeft)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center pt-4">
+              <div className="flex items-center gap-2 p-4 font-mono bg-gray-500">
+                <span className="text-3xl font-bold tabular-nums text-white">{hmsWithMilliseconds(state.elapsedMilliseconds)}</span>
+              </div>
+            </div>
+          </main>
+
+
+          {/* Timer Control Buttons */}
+          <div className="flex justify-center gap-4 mt-6">
+            <Button 
+              onClick={togglePause}
+              variant={state.paused ? "default" : "secondary"}
+              className={state.paused ? "bg-green-600 text-white font-mono font-bold hover:bg-green-700" : "bg-muted text-black font-mono font-bold"}
+            >
+              {state.paused ? (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  RESUME
+                </>
+              ) : (
+                <>
+                  <Pause className="mr-2 h-4 w-4 text-black" />
+                  PAUSE
+                </>
+              )}
+            </Button>
             <Button 
               onClick={() => window.location.reload()}
               variant="secondary"
               className="bg-muted text-black font-mono font-bold"
             >
               <TimerReset className="mr-2 h-4 w-4 text-black" />
-              RESET TIMER
+              RESET
             </Button>
           </div>
         </>
